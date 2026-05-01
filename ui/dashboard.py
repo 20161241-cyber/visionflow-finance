@@ -91,7 +91,7 @@ class DashboardView:
         </svg>"""
 
         return ft.Container(
-            content=ft.Image(src_base64=_svg_to_b64(svg_content), width=200, height=200),
+            content=ft.Image("data:image/svg+xml;base64," + _svg_to_b64(svg_content), width=200, height=200),
             alignment=ft.alignment.Alignment.CENTER,
         )
 
@@ -297,6 +297,60 @@ class DashboardView:
             padding=ft.Padding.symmetric(horizontal=20, vertical=16),
         )
 
+        # ── Dialogo de Metas ──
+        def guardar_meta(e):
+            nombre = input_meta_nombre.value.strip()
+            try:
+                monto = float(input_meta_monto.value.strip())
+            except ValueError:
+                monto = 0.0
+            if nombre and monto > 0:
+                self.budget.fijar_meta(nombre, monto)
+            else:
+                self.budget.eliminar_meta()
+            dialogo_meta.open = False
+            self.page.update()
+            self.page.navigate("/")
+
+        input_meta_nombre = ft.TextField(label="¿Qué quieres comprar?", value=self.budget.meta_nombre)
+        input_meta_monto = ft.TextField(label="Costo ($)", value=str(self.budget.meta_monto) if self.budget.meta_monto else "", keyboard_type=ft.KeyboardType.NUMBER)
+        
+        dialogo_meta = ft.AlertDialog(
+            title=ft.Text("Fijar Meta de Ahorro"),
+            content=ft.Column([input_meta_nombre, input_meta_monto], tight=True),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: setattr(dialogo_meta, "open", False) or self.page.update()),
+                ft.ElevatedButton("Guardar", on_click=guardar_meta, bgcolor="#00F5C4", color="#0A0F1E"),
+                ft.TextButton("Eliminar Meta", on_click=lambda e: self.budget.eliminar_meta() or setattr(dialogo_meta, "open", False) or self.page.navigate("/"), style=ft.ButtonStyle(color="#FF4444"))
+            ]
+        )
+        self.page.overlay.append(dialogo_meta)
+
+        def abrir_dialogo_meta(e):
+            dialogo_meta.open = True
+            self.page.update()
+
+        # ── Tarjeta de Meta ──
+        if self.budget.meta_nombre:
+            meta_card = ft.Container(
+                content=ft.Row([
+                    ft.Text("✨ Meta:", size=13, color="#7B61FF", weight=ft.FontWeight.BOLD),
+                    ft.Text(f"{self.budget.meta_nombre} (${self.budget.meta_monto:.2f})", size=13, color="white", expand=True),
+                    ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_size=16, icon_color="#718096", on_click=abrir_dialogo_meta)
+                ]),
+                bgcolor="#111827", padding=10, border_radius=12, margin=ft.Margin.symmetric(horizontal=20)
+            )
+        else:
+            meta_card = ft.Container(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE_ROUNDED, color="#718096", size=16),
+                    ft.Text("Fijar una meta de ahorro (Deseo/Placer)", size=13, color="#718096")
+                ], alignment=ft.MainAxisAlignment.CENTER),
+                bgcolor="#111827", padding=10, border_radius=12, margin=ft.Margin.symmetric(horizontal=20),
+                on_click=abrir_dialogo_meta,
+                ink=True
+            )
+
         # ── Tarjeta presupuesto diario ──
         semaforo_color = (
             "#00F5C4" if estado.porcentaje_utilizado < 60
@@ -395,12 +449,78 @@ class DashboardView:
             elevation=8,
         )
 
+        # ── Sección Predictiva ──
+        pred = self.budget.analisis_predictivo()
+        
+        # Generar SVG para el gráfico de líneas
+        svg_ancho, svg_alto = 300, 150
+        max_y = max(estado.saldo_inicial, 1)
+        max_x = max(pred["dias_restantes"], 1)
+        
+        def proyectar_punto(x, y):
+            # Escalar y proyectar las coordenadas (0,0 es top-left en SVG, así que invertimos Y)
+            px = (x / max_x) * svg_ancho
+            py = svg_alto - ((y / max_y) * svg_alto)
+            return f"{px:.1f},{py:.1f}"
+            
+        path_ideal = "M " + " L ".join([proyectar_punto(p["x"], p["y"]) for p in pred["data_ideal"]])
+        path_real = "M " + " L ".join([proyectar_punto(p["x"], p["y"]) for p in pred["data_real"]])
+        
+        svg_grafico = f"""
+        <svg viewBox="-10 -10 {svg_ancho+20} {svg_alto+20}" xmlns="http://www.w3.org/2000/svg">
+          <!-- Grid lines -->
+          <line x1="0" y1="{svg_alto}" x2="{svg_ancho}" y2="{svg_alto}" stroke="#1F2937" stroke-width="1"/>
+          <line x1="0" y1="{svg_alto/2}" x2="{svg_ancho}" y2="{svg_alto/2}" stroke="#1F2937" stroke-width="1" stroke-dasharray="4"/>
+          <line x1="0" y1="0" x2="{svg_ancho}" y2="0" stroke="#1F2937" stroke-width="1"/>
+          
+          <!-- Linea Ideal (Verde) -->
+          <path d="{path_ideal}" fill="none" stroke="#00F5C4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          
+          <!-- Linea Real (Roja) -->
+          <path d="{path_real}" fill="none" stroke="#FF4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        """
+        import base64
+        b64_svg = base64.b64encode(svg_grafico.encode('utf-8')).decode('utf-8')
+        
+        predictivo_section = ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Text("🔮 Análisis Predictivo", size=14, weight=ft.FontWeight.W_600, color="#7B61FF"),
+                    ft.Text(f"Burn Rate: ${pred['burn_rate']:.2f}/d", size=11, color="#718096"),
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ft.Container(
+                    content=ft.Image("data:image/svg+xml;base64," + b64_svg, fit="contain"),
+                    height=180, padding=10, alignment=ft.alignment.Alignment(0, 0)
+                ),
+                ft.Row([
+                    ft.Container(bgcolor="#00F5C4", width=10, height=10, border_radius=5),
+                    ft.Text("Gasto Ideal", size=11, color="#718096"),
+                    ft.Container(bgcolor="#FF4444", width=10, height=10, border_radius=5, margin=ft.margin.only(left=10)),
+                    ft.Text("Gasto Real", size=11, color="#718096"),
+                ], alignment=ft.MainAxisAlignment.CENTER)
+            ]),
+            bgcolor="#111827", border_radius=20, padding=20, margin=ft.Margin.symmetric(horizontal=20),
+        )
+
+        alerta_ia = None
+        if pred["alerta"]:
+            alerta_ia = ft.Container(
+                content=ft.Row([
+                    ft.Text("🤖", size=24),
+                    ft.Text(pred["alerta"], size=12, color="#FFD166", expand=True, weight=ft.FontWeight.BOLD)
+                ]),
+                bgcolor="#3B2314", border_radius=12, padding=16, margin=ft.Margin.symmetric(horizontal=20)
+            )
+
         return ft.Stack([
             ft.Column([
                 header,
-                ft.Container(height=8),
+                meta_card,
+                *( [alerta_ia] if alerta_ia else [] ),
                 tarjeta_presupuesto,
-                ft.Container(height=12),
+                predictivo_section,
+                alertas_section,
                 seccion_grafico,
                 ft.Container(height=12),
                 alertas_section,

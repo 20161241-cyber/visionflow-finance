@@ -53,6 +53,8 @@ class EstadoPresupuesto:
     presupuesto_diario: float
     total_gastado: float
     porcentaje_utilizado: float
+    meta_nombre: str = ""
+    meta_monto: float = 0.0
 
 
 # ─── Utilidad: directorio de datos persistente ────────────────────────────────
@@ -96,6 +98,8 @@ class BudgetEngine:
         self.saldo_inicial = saldo_inicial
         self.fecha_proximo_ingreso: date = fecha_proximo_ingreso or self._siguiente_quincena()
         self.transacciones: list = []
+        self.meta_nombre = ""
+        self.meta_monto = 0.0
         self._cargar_cache()
 
     # ─── Quincenas ───────────────────────────────────────────────────────────
@@ -165,15 +169,15 @@ class BudgetEngine:
 
         Si el saldo es negativo, retorna 0.0 con advertencia.
         """
-        saldo = self.saldo_actual()
+        saldo = self.saldo_actual() - self.meta_monto
         dias = self.dias_para_cobro()
 
         if saldo <= 0:
-            logger.warning("¡Saldo agotado! Saldo: %.2f", saldo)
+            logger.warning("¡Saldo agotado o meta muy alta! Saldo: %.2f", saldo)
             return 0.0
 
         presupuesto = round(saldo / dias, 2)
-        logger.info("Presupuesto diario: $%.2f (%d días)", presupuesto, dias)
+        logger.info("Presupuesto diario (descontando meta): $%.2f (%d días)", presupuesto, dias)
         return presupuesto
 
     def estado_presupuesto(self) -> EstadoPresupuesto:
@@ -190,6 +194,8 @@ class BudgetEngine:
             presupuesto_diario=self.calcular_presupuesto_diario(),
             total_gastado=gastado,
             porcentaje_utilizado=pct,
+            meta_nombre=self.meta_nombre,
+            meta_monto=self.meta_monto,
         )
 
     # ─── Detector de Gastos Hormiga ──────────────────────────────────────────
@@ -273,6 +279,8 @@ class BudgetEngine:
             data = {
                 "saldo_inicial": self.saldo_inicial,
                 "fecha_proximo_ingreso": str(self.fecha_proximo_ingreso),
+                "meta_nombre": self.meta_nombre,
+                "meta_monto": self.meta_monto,
                 "transacciones": [t.to_dict() for t in self.transacciones],
             }
             self.CACHE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2))
@@ -286,6 +294,8 @@ class BudgetEngine:
                 return
             data = json.loads(self.CACHE_PATH.read_text())
             self.saldo_inicial = data.get("saldo_inicial", self.saldo_inicial)
+            self.meta_nombre = data.get("meta_nombre", "")
+            self.meta_monto = data.get("meta_monto", 0.0)
             fecha_str = data.get("fecha_proximo_ingreso")
             if fecha_str:
                 self.fecha_proximo_ingreso = date.fromisoformat(fecha_str)
@@ -299,5 +309,79 @@ class BudgetEngine:
         self.saldo_inicial = nuevo_saldo
         self.fecha_proximo_ingreso = nueva_fecha_cobro or self._siguiente_quincena()
         self.transacciones.clear()
+        self.meta_nombre = ""
+        self.meta_monto = 0.0
         self._guardar_cache()
-        logger.info("Presupuesto reiniciado: $%.2f", nuevo_saldo)
+        logger.info("Presupuesto reseteado. Saldo: %.2f", nuevo_saldo)
+
+    # ─── Metas de Ahorro ───────────────────────────────────────────────────────
+    def fijar_meta(self, nombre: str, monto: float):
+        """Fija una meta de ahorro que será descontada del presupuesto."""
+        self.meta_nombre = nombre
+        self.meta_monto = monto
+        self._guardar_cache()
+
+    def eliminar_meta(self):
+        """Elimina la meta actual."""
+        self.meta_nombre = ""
+        self.meta_monto = 0.0
+        self._guardar_cache()
+
+    # ─── Algoritmo Predictivo ────────────────────────────────────────────────
+    def analisis_predictivo(self) -> dict:
+        """
+        Analiza el historial de transacciones y genera una proyección para la "Fecha de Quiebra".
+        """
+        import flet as ft
+        from datetime import datetime, timedelta, date
+        hoy = date.today()
+        dias_restantes = self.dias_para_cobro()
+        saldo = self.saldo_actual() - self.meta_monto
+        
+        # Calcular Burn Rate (gasto promedio de los últimos 7 días con transacciones)
+        fechas_gastos = {}
+        for t in self.transacciones:
+            f = datetime.fromisoformat(t.fecha).date()
+            if f <= hoy:
+                fechas_gastos[f] = fechas_gastos.get(f, 0.0) + t.monto
+                
+        dias_con_gasto = len(fechas_gastos)
+        burn_rate = sum(fechas_gastos.values()) / dias_con_gasto if dias_con_gasto > 0 else 0.0
+        
+        burn_rate_ideal = saldo / dias_restantes if dias_restantes > 0 and saldo > 0 else 0.0
+        
+        # Proyectar fecha de quiebra
+        fecha_quiebra = "Desconocida"
+        alerta = None
+        
+        if burn_rate > 0:
+            dias_para_quiebra = int((self.saldo_actual() - self.meta_monto) / burn_rate) if (self.saldo_actual() - self.meta_monto) > 0 else 0
+            fecha_q_obj = hoy + timedelta(days=dias_para_quiebra)
+            fecha_quiebra = fecha_q_obj.isoformat()
+            
+            if fecha_q_obj < self.fecha_proximo_ingreso and (self.saldo_actual() - self.meta_monto) > 0:
+                alerta = f"🚨 Alerta Crítica: A tu ritmo actual (${burn_rate:.2f}/día), tu saldo llegará a cero el {fecha_q_obj.strftime('%d/%m')}."
+            elif burn_rate > burn_rate_ideal and saldo > 0:
+                alerta = f"⚠️ Advertencia: Estás gastando más rápido que lo ideal (${burn_rate_ideal:.2f}/día)."
+                
+        # Generar puntos de gráfico
+        data_ideal = []
+        data_real = []
+        saldo_simulado_ideal = self.saldo_actual() - self.meta_monto
+        saldo_simulado_real = self.saldo_actual() - self.meta_monto
+        
+        for i in range(min(dias_restantes + 1, 15)):
+            data_ideal.append({"x": i, "y": max(0, saldo_simulado_ideal)})
+            data_real.append({"x": i, "y": max(0, saldo_simulado_real)})
+            saldo_simulado_ideal -= burn_rate_ideal
+            saldo_simulado_real -= burn_rate
+            
+        return {
+            "burn_rate": burn_rate,
+            "burn_rate_ideal": burn_rate_ideal,
+            "fecha_quiebra": fecha_quiebra,
+            "alerta": alerta,
+            "data_ideal": data_ideal,
+            "data_real": data_real,
+            "dias_restantes": dias_restantes
+        }

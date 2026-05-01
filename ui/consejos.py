@@ -28,12 +28,14 @@ CONSEJOS_ADVERTENCIA = [
 ]
 
 CONSEJOS_SALUDABLE = [
-    ("🎯", "Regla 50/30/20", "50% necesidades básicas, 30% gastos personales, 20% ahorro.", "#00F5C4"),
-    ("☕", "Café de olla en casa", "Un café casero cuesta $4 vs $45 en Starbucks.", "#34D399"),
+    ("🎯", "Regla 50/30/20", "50% necesidades, 30% deseos, 20% ahorro e inversión.", "#00F5C4"),
+    ("☕", "Preparar café en casa", "Hacer tu café cuesta ~$15 MXN vs ~$75 MXN en una cafetería.", "#34D399"),
+    ("🚌", "Uso inteligente de Uber", "Usar transporte público ahorra hasta $3,000 MXN mensuales frente al viaje diario en Didi/Uber.", "#7B61FF"),
 ]
 
 CONSEJOS_HORMIGA = [
-    ("🐜", "El efecto latte", "Si gastas $45 en café 3 veces/semana = $540/mes.", "#FF4444"),
+    ("🐜", "El efecto latte real", "Gastar $75 en café o snacks 3 veces por semana equivale a $900 al mes.", "#FF4444"),
+    ("📱", "Suscripciones ocultas", "Revisa tus pagos domiciliados; 2 apps de streaming olvidadas pueden costar $400 al mes.", "#FF6B6B"),
 ]
 
 
