@@ -100,6 +100,7 @@ class BudgetEngine:
         self.transacciones: list = []
         self.meta_nombre = ""
         self.meta_monto = 0.0
+        self.is_first_time = False
         self._cargar_cache()
 
     # ─── Quincenas ───────────────────────────────────────────────────────────
@@ -291,6 +292,7 @@ class BudgetEngine:
         """Carga transacciones desde el archivo JSON local si existe."""
         try:
             if not self.CACHE_PATH.exists():
+                self.is_first_time = True
                 return
             data = json.loads(self.CACHE_PATH.read_text())
             self.saldo_inicial = data.get("saldo_inicial", self.saldo_inicial)
@@ -311,6 +313,7 @@ class BudgetEngine:
         self.transacciones.clear()
         self.meta_nombre = ""
         self.meta_monto = 0.0
+        self.is_first_time = False
         self._guardar_cache()
         logger.info("Presupuesto reseteado. Saldo: %.2f", nuevo_saldo)
 

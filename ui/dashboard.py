@@ -131,6 +131,62 @@ class DashboardView:
             padding=ft.Padding.symmetric(horizontal=16, vertical=12),
         )
 
+    # ─── Onboarding Pop-up ──────────────────────────────────────────────────
+    def _mostrar_onboarding_dialog(self):
+        """Muestra un pop-up la primera vez que el usuario entra para configurar saldo y metas."""
+        tf_saldo = ft.TextField(label="¿Cuánto dinero tienes disponible? ($)", keyboard_type=ft.KeyboardType.NUMBER)
+        tf_dias = ft.TextField(label="¿Para cuántos días es? (Ej. 15)", keyboard_type=ft.KeyboardType.NUMBER)
+        tf_meta_nombre = ft.TextField(label="Nombre de tu meta (Opcional)")
+        tf_meta_monto = ft.TextField(label="Monto a guardar ($)", keyboard_type=ft.KeyboardType.NUMBER)
+
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("¡Bienvenido a VisionFlow Finance!", size=20, color="#00F5C4"),
+            content=ft.Column([
+                ft.Text("Para empezar, configuremos tu presupuesto de supervivencia:", size=13),
+                tf_saldo,
+                tf_dias,
+                ft.Divider(color="#2D3748"),
+                ft.Text("¿Tienes alguna meta de ahorro?", size=13),
+                tf_meta_nombre,
+                tf_meta_monto,
+            ], width=350, spacing=10, tight=True),
+            actions=[
+                ft.ElevatedButton("Comenzar", bgcolor="#7B61FF", color="white", on_click=lambda e: self._guardar_onboarding(e, dlg, tf_saldo, tf_dias, tf_meta_nombre, tf_meta_monto))
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            bgcolor="#111827"
+        )
+        self.page.overlay.append(dlg)
+        dlg.open = True
+        self.page.update()
+
+    def _guardar_onboarding(self, e, dlg, tf_saldo, tf_dias, tf_meta_nombre, tf_meta_monto):
+        try:
+            saldo = float(tf_saldo.value) if tf_saldo.value else 0.0
+            dias = int(tf_dias.value) if tf_dias.value else 15
+        except ValueError:
+            return # Faltan campos obligatorios o inválidos
+            
+        from datetime import date, timedelta
+        # Asignar fecha_cobro basándonos en los días ingresados
+        nueva_fecha_cobro = date.today() + timedelta(days=dias)
+        
+        self.budget.resetear(nuevo_saldo=saldo, nueva_fecha_cobro=nueva_fecha_cobro)
+        
+        # Meta opcional
+        if tf_meta_nombre.value and tf_meta_monto.value:
+            try:
+                monto_meta = float(tf_meta_monto.value)
+                self.budget.fijar_meta(tf_meta_nombre.value, monto_meta)
+            except ValueError:
+                pass
+                
+        self.budget.is_first_time = False
+        dlg.open = False
+        self.page.update()
+        self.page.navigate("/")
+
     # ─── Panel de configuración de presupuesto ───────────────────────────────
     def _build_config_panel(self) -> ft.Control:
         """Panel para ajustar presupuesto inicial y días."""
@@ -275,6 +331,9 @@ class DashboardView:
 
     # ─── Build principal ──────────────────────────────────────────────────────
     def build(self) -> ft.Control:
+        if self.budget.is_first_time:
+            self._mostrar_onboarding_dialog()
+            
         estado = self.budget.estado_presupuesto()
         gastos = self.budget.gastos_por_categoria()
         alertas = self.budget.detectar_gastos_hormiga()
