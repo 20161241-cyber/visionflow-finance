@@ -1,0 +1,20 @@
+[project]
+name = "visionflow-finance"
+version = "1.0.0"
+description = "App de finanzas personales con escaneo OCR de tickets"
+authors = [
+    {name = "VisionFlow", email = "dev@visionflow.finance"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "flet>=0.24.0",
+    "Pillow>=10.0.0",
+]
+
+[tool.flet]
+app.module = "main"
+app.path = "."
+
+[tool.flet.app]
+org = "com.visionflow.finance"
+product = "VisionFlow Finance"
