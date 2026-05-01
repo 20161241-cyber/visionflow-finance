@@ -92,14 +92,26 @@ class BudgetEngine:
         saldo_inicial: float = 5000.0,
         fecha_proximo_ingreso: Optional[date] = None,
     ):
-        # Path dinámico que funciona tanto en Android como Desktop
-        self.CACHE_PATH = _obtener_directorio_datos() / "transacciones_cache.json"
+        self._user_id = "default"
+        self._set_paths()
         
         self.saldo_inicial = saldo_inicial
         self.fecha_proximo_ingreso: date = fecha_proximo_ingreso or self._siguiente_quincena()
         self.transacciones: list = []
         self.meta_nombre = ""
         self.meta_monto = 0.0
+        self.is_first_time = False
+        self._cargar_cache()
+
+    def _set_paths(self):
+        self.CACHE_PATH = _obtener_directorio_datos() / f"transacciones_cache_{self._user_id}.json"
+
+    def set_user(self, user_id: str):
+        """Cambia el contexto al usuario logueado y recarga su caché."""
+        if not user_id: return
+        self._user_id = user_id
+        self._set_paths()
+        self.transacciones.clear()
         self.is_first_time = False
         self._cargar_cache()
 

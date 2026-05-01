@@ -54,7 +54,7 @@ def main(page: ft.Page):
     historial = HistorialView(page, budget_engine)
     consejos  = ConsejosView(page, budget_engine)
     camera_view = CameraView(page, on_capture=scanner._procesar_imagen)
-    auth_view = AuthView(page)
+    auth_view = AuthView(page, budget_engine)
 
     file_picker = ft.FilePicker()
     page.services.append(file_picker)
@@ -92,6 +92,7 @@ def main(page: ft.Page):
     session = db.get_session()
     
     if session:
+        budget_engine.set_user(session.user.id)
         navigate("/")
     else:
         navigate("/login")

@@ -2,8 +2,9 @@ import flet as ft
 from core.db_client import db
 
 class AuthView:
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, budget_engine):
         self.page = page
+        self.budget = budget_engine
         self.es_registro = False
 
     def build(self) -> ft.Control:
@@ -96,6 +97,11 @@ class AuthView:
         
         if res.get("exito"):
             self.lbl_error.value = ""
+            user_id = res.get("usuario_id")
+            if user_id:
+                self.budget.set_user(user_id)
+            if self.es_registro:
+                self.budget.is_first_time = True
             self.page.navigate("/")
         else:
             error_msg = res.get("error", "Error desconocido.")
