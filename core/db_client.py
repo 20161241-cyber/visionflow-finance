@@ -40,9 +40,24 @@ class SupabaseClient:
         self._modo_offline = not SUPABASE_DISPONIBLE
 
         if SUPABASE_DISPONIBLE:
+            # 1. Intentar variable de entorno
             url = os.getenv("SUPABASE_URL", "")
             key = os.getenv("SUPABASE_KEY", "")
-            if url and key:
+            
+            # 2. Intentar archivos locales si no hay variables de entorno
+            if not url or not key:
+                try:
+                    current_dir = Path(__file__).parent.parent
+                    url_file = current_dir / "supabase_url.txt"
+                    key_file = current_dir / "supabase_key.txt"
+                    if url_file.exists():
+                        url = url_file.read_text().strip()
+                    if key_file.exists():
+                        key = key_file.read_text().strip()
+                except Exception as e:
+                    logger.warning("Error leyendo archivos supabase_url.txt / supabase_key.txt: %s", e)
+            
+            if url and key and key != "PEGAR_AQUI_TU_ANON_KEY":
                 try:
                     self._client = create_client(url, key)
                     logger.info("Supabase conectado: %s", url[:40])
@@ -50,7 +65,7 @@ class SupabaseClient:
                     logger.warning("Error al conectar Supabase: %s", e)
                     self._modo_offline = True
             else:
-                logger.info("Variables SUPABASE_URL/KEY no configuradas → modo offline")
+                logger.info("Variables o archivos SUPABASE_URL/KEY no configurados → modo offline")
                 self._modo_offline = True
 
     @property
@@ -127,6 +142,69 @@ class SupabaseClient:
         except Exception as e:
             logger.error("Error obteniendo transacciones: %s", e)
             return []
+
+    # ─── Recibos Avanzados e Inteligencia Artificial ─────────────────────────
+
+    def guardar_recibo_completo(self, total: float, store_name: str, articulos: list) -> bool:
+        """Guarda la cabecera del recibo y todos sus artículos individuales."""
+        if self.offline:
+            return False
+            
+        try:
+            # 1. Insertar Recibo
+            res = self._client.table("receipts").insert({
+                "total_amount": total,
+                "store_name": store_name
+            }).execute()
+            
+            if not res.data:
+                return False
+                
+            receipt_id = res.data[0]["id"]
+            
+            # 2. Insertar Artículos
+            items_to_insert = []
+            for art in articulos:
+                items_to_insert.append({
+                    "receipt_id": receipt_id,
+                    "product_name": art.get("name", "Desconocido"),
+                    "price": art.get("price", 0.0),
+                    "category": art.get("category", "Otros")
+                })
+                
+            if items_to_insert:
+                self._client.table("receipt_items").insert(items_to_insert).execute()
+                
+            return True
+        except Exception as e:
+            logger.error("Error al guardar ticket en Supabase: %s", e)
+            return False
+
+    def obtener_historial_articulos(self) -> list:
+        """Obtiene todos los artículos registrados para análisis predictivo."""
+        if self.offline:
+            return []
+            
+        try:
+            res = self._client.table("receipt_items").select("*").execute()
+            return res.data or []
+        except Exception as e:
+            logger.error("Error al obtener historial de articulos: %s", e)
+            return []
+
+    def guardar_insight(self, insight_type: str, product: str, message: str, savings: float = 0.0):
+        if self.offline:
+            return
+            
+        try:
+            self._client.table("financial_insights").insert({
+                "insight_type": insight_type,
+                "target_product": product,
+                "message": message,
+                "potential_savings": savings
+            }).execute()
+        except Exception as e:
+            logger.error("Error guardando insight financiero: %s", e)
 
     # ─── Storage de Imágenes ──────────────────────────────────────────────────
 

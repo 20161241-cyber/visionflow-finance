@@ -385,3 +385,27 @@ class BudgetEngine:
             "data_real": data_real,
             "dias_restantes": dias_restantes
         }
+
+    # ─── Insights e Inteligencia Artificial ──────────────────────────────────
+    def generar_insights_inteligentes(self) -> list[str]:
+        """Analiza el historial completo de Supabase para encontrar compras recurrentes (Hormigas)."""
+        from core.db_client import db
+        articulos = db.obtener_historial_articulos()
+        
+        if not articulos:
+            return []
+            
+        frecuencias = {}
+        for art in articulos:
+            nombre = art.get("product_name", "").lower().strip()
+            if nombre:
+                frecuencias[nombre] = frecuencias.get(nombre, 0) + 1
+                
+        nuevos_insights = []
+        for nombre, count in frecuencias.items():
+            if count >= 3:
+                insight_msg = f"Detectamos que compras '{nombre.title()}' frecuentemente ({count} veces). ¿Podrías reducirlo o buscar una marca blanca?"
+                db.guardar_insight("HORMIGA_DETECTED", nombre.title(), insight_msg, 0.0)
+                nuevos_insights.append(insight_msg)
+                
+        return nuevos_insights

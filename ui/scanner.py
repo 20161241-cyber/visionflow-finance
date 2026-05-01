@@ -73,6 +73,9 @@ class ScannerView:
         if not self._resultado_ocr:
             return
 
+        from core.db_client import db
+        
+        # 1. Guardar localmente
         for art in self._resultado_ocr.articulos:
             self.budget.agregar_transaccion(
                 descripcion=art.nombre,
@@ -80,6 +83,13 @@ class ScannerView:
                 categoria=art.categoria,
                 es_hormiga=(art.categoria == "Gasto Hormiga"),
             )
+            
+        # 2. Guardar en Supabase
+        articulos_json = [
+            {"name": a.nombre, "price": a.precio, "category": a.categoria}
+            for a in self._resultado_ocr.articulos
+        ]
+        db.guardar_recibo_completo(self._resultado_ocr.total, "Escaneado", articulos_json)
 
         self._resultado_ocr = None
         self.page.navigate("/")

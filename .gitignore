@@ -32,3 +32,5 @@ build/
 
 groq_api_key.txt
 pagedir.txt
+supabase_url.txt
+supabase_key.txt

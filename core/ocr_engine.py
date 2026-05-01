@@ -141,102 +141,73 @@ def extraer_texto_ticket(ruta_imagen) -> ResultadoOCR:
     Returns:
         ResultadoOCR con total, moneda detectada y lista de artículos.
     """
-    # ── Verificar disponibilidad de Tesseract ──
-    if not TESSERACT_DISPONIBLE:
-        logger.warning("Tesseract no disponible. Usando modo fallback (solo PIL).")
-        return _extraer_fallback_pil(ruta_imagen)
-
+    import base64
+    import json
+    import os
+    from groq import Groq
+    
+    logger.info("Iniciando extracción Vision AI para: %s", ruta_imagen)
+    
     try:
-        # 1. Preprocesar imagen
-        imagen_procesada = preprocesar_imagen(ruta_imagen)
-
-        # 2. Configuración de Tesseract para tickets (PSM 6: bloque de texto uniforme)
-        config_tess = (
-            "--oem 3 "          # Motor LSTM (más preciso)
-            "--psm 6 "          # Bloque de texto uniforme
-            "-l spa+eng "       # Español + inglés (tickets mexicanos)
-            "--dpi 300"
+        current_dir = Path(__file__).parent.parent
+        key_file = current_dir / "groq_api_key.txt"
+        api_key = key_file.read_text().strip() if key_file.exists() else os.getenv("GROQ_API_KEY")
+    except Exception:
+        api_key = None
+        
+    if not api_key:
+        return ResultadoOCR("", "$", 0.0, exito=False, error="No se encontró GROQ_API_KEY")
+        
+    try:
+        client = Groq(api_key=api_key)
+        with open(ruta_imagen, "rb") as img:
+            base64_img = base64.b64encode(img.read()).decode("utf-8")
+            
+        prompt = """Eres un experto OCR de finanzas. Extrae de este recibo el total y los artículos.
+RESPONDE SÓLO CON JSON VÁLIDO.
+{
+  "total": 120.50,
+  "articulos": [
+    {"nombre": "Leche", "precio": 35.0, "categoria": "Despensa"}
+  ]
+}"""
+        response = client.chat.completions.create(
+            model="llama-3.2-90b-vision-preview",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_img}"}}
+                ]
+            }],
+            temperature=0.0
         )
-
-        # 3. Extraer texto y datos de confianza
-        texto_raw = pytesseract.image_to_string(imagen_procesada, config=config_tess)
-        datos_conf = pytesseract.image_to_data(
-            imagen_procesada,
-            config=config_tess,
-            output_type=pytesseract.Output.DICT,
-        )
-
-        # Calcular confianza promedio (ignorar valores -1)
-        confianzas = [int(c) for c in datos_conf["conf"] if str(c).isdigit() and int(c) >= 0]
-        confianza_promedio = sum(confianzas) / len(confianzas) if confianzas else 0.0
-
-        logger.info("Texto extraído (%d chars), confianza=%.1f%%", len(texto_raw), confianza_promedio)
-
-        # 4. Detectar moneda
-        moneda = _detectar_moneda(texto_raw)
-
-        # 5. Extraer total
-        total = _extraer_total(texto_raw)
-
-        # 6. Parsear artículos
-        articulos = _parsear_articulos(texto_raw)
-
+        
+        json_str = response.choices[0].message.content.strip()
+        if json_str.startswith("```json"): json_str = json_str[7:-3]
+        if json_str.startswith("```"): json_str = json_str[3:-3]
+        
+        data = json.loads(json_str)
+        articulos = [
+            ArticuloTicket(a.get("nombre", "Item"), float(a.get("precio", 0.0)), a.get("categoria", "Otros"))
+            for a in data.get("articulos", [])
+        ]
+        total = float(data.get("total", sum(a.precio for a in articulos)))
+        
         return ResultadoOCR(
-            texto_raw=texto_raw,
-            moneda=moneda,
+            texto_raw=json_str,
+            moneda="$",
             total=total,
             articulos=articulos,
-            confianza=confianza_promedio,
-            exito=True,
+            confianza=99.0,
+            exito=True
         )
-
-    except FileNotFoundError as e:
-        logger.error("Archivo no encontrado: %s", e)
-        return ResultadoOCR("", "$", 0.0, exito=False, error=str(e))
     except Exception as e:
-        logger.exception("Error inesperado en OCR")
-        # Si Tesseract falla en runtime (ej: binario no encontrado), usar fallback
-        logger.warning("Intentando modo fallback...")
-        try:
-            return _extraer_fallback_pil(ruta_imagen)
-        except Exception:
-            return ResultadoOCR("", "$", 0.0, exito=False, error=str(e))
+        logger.error("Error en Vision API: %s", e)
+        return ResultadoOCR("", "$", 0.0, exito=False, error=str(e))
 
-
-def _extraer_fallback_pil(ruta_imagen) -> ResultadoOCR:
-    """
-    Modo fallback cuando Tesseract no está disponible (Android).
-    Informa al usuario que el OCR completo no está disponible en este dispositivo.
-    """
-    logger.info("Modo fallback PIL activado para: %s", ruta_imagen)
-
-    ruta = Path(ruta_imagen)
-    if not ruta.exists():
-        return ResultadoOCR(
-            texto_raw="",
-            moneda="$",
-            total=0.0,
-            exito=False,
-            error=f"Imagen no encontrada: {ruta}",
-        )
-
-    # En modo fallback, no podemos hacer OCR real pero sí confirmar que la imagen existe
-    # y devolver un resultado parcial para que el usuario pueda ingresar datos manualmente
-    return ResultadoOCR(
-        texto_raw="[OCR no disponible en este dispositivo]",
-        moneda="$",
-        total=0.0,
-        articulos=[
-            ArticuloTicket(
-                nombre="Ticket escaneado (ingresa datos manualmente)",
-                precio=0.0,
-                categoria="Sin categoría",
-            )
-        ],
-        confianza=0.0,
-        exito=True,
-        error="Tesseract OCR no disponible. Ingresa los datos del ticket manualmente.",
-    )
+def _extraer_fallback_pil(ruta_imagen):
+    pass
 
 
 def _detectar_moneda(texto: str) -> str:
