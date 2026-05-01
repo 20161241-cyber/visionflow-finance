@@ -160,7 +160,7 @@ class ConsejosView:
         try:
             chat_completion = await client.chat.completions.create(
                 messages=mensajes_api,
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 max_tokens=300,
             )
             respuesta = chat_completion.choices[0].message.content
