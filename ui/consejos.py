@@ -96,7 +96,12 @@ class ConsejosView:
     def _get_groq_client(self):
         if not HAS_GROQ:
             return None
-        api_key = self.page.client_storage.get("groq_api_key")
+        storage_dir = os.environ.get("FLET_APP_STORAGE_DATA", ".")
+        key_file = os.path.join(storage_dir, "groq_api_key.txt")
+        api_key = ""
+        if os.path.exists(key_file):
+            with open(key_file, "r") as f:
+                api_key = f.read().strip()
         if not api_key:
             from core.config import GROQ_API_KEY
             api_key = GROQ_API_KEY
@@ -109,7 +114,10 @@ class ConsejosView:
     async def _guardar_api_key(self, e):
         key = self.api_key_input.value.strip()
         if key:
-            self.page.client_storage.set("groq_api_key", key)
+            storage_dir = os.environ.get("FLET_APP_STORAGE_DATA", ".")
+            key_file = os.path.join(storage_dir, "groq_api_key.txt")
+            with open(key_file, "w") as f:
+                f.write(key)
             self.page.navigate("/consejos")
 
     async def _enviar_mensaje(self, e):
@@ -263,18 +271,30 @@ class ConsejosView:
                 padding=ft.Padding.symmetric(horizontal=20, vertical=10),
             )
 
-        tabs = ft.Tabs(
-            selected_index=0,
-            animation_duration=300,
-            tabs=[
-                ft.Tab(text="Tips Rápidos", content=tab_tips),
-                ft.Tab(text="Asistente IA", content=tab_chat),
-            ],
-            expand=True,
-            label_color="#00F5C4",
-            unselected_label_color="#718096",
-            indicator_color="#00F5C4",
-        )
+        self.tab_container = ft.Container(content=tab_tips, expand=True)
+
+        self.btn_tips = ft.ElevatedButton("Tips Rápidos", color="#0A0F1E", bgcolor="#00F5C4", on_click=lambda e: on_tab_change(0))
+        self.btn_chat = ft.ElevatedButton("Asistente IA", color="#718096", bgcolor="#111827", on_click=lambda e: on_tab_change(1))
+
+        def on_tab_change(index):
+            if index == 0:
+                self.tab_container.content = tab_tips
+                self.btn_tips.color = "#0A0F1E"
+                self.btn_tips.bgcolor = "#00F5C4"
+                self.btn_chat.color = "#718096"
+                self.btn_chat.bgcolor = "#111827"
+            else:
+                self.tab_container.content = tab_chat
+                self.btn_chat.color = "#0A0F1E"
+                self.btn_chat.bgcolor = "#00F5C4"
+                self.btn_tips.color = "#718096"
+                self.btn_tips.bgcolor = "#111827"
+            
+            self.btn_tips.update()
+            self.btn_chat.update()
+            self.tab_container.update()
+
+        tabs = ft.Row([self.btn_tips, self.btn_chat], alignment=ft.MainAxisAlignment.CENTER, spacing=20)
 
         return ft.Stack([
             ft.Column([
@@ -285,7 +305,8 @@ class ConsejosView:
                     ]),
                     padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
-                ft.Container(content=tabs, expand=True),
+                ft.Container(content=tabs),
+                self.tab_container,
                 ft.Container(height=80),
             ], expand=True),
             ft.Container(content=nav_bar, bottom=0, left=0, right=0),
