@@ -20,6 +20,7 @@ from ui.scanner import ScannerView
 from ui.historial import HistorialView
 from ui.consejos import ConsejosView
 from ui.camera import CameraView
+from ui.auth import AuthView
 from core.budget_engine import BudgetEngine
 
 
@@ -53,6 +54,7 @@ def main(page: ft.Page):
     historial = HistorialView(page, budget_engine)
     consejos  = ConsejosView(page, budget_engine)
     camera_view = CameraView(page, on_capture=scanner._procesar_imagen)
+    auth_view = AuthView(page)
 
     file_picker = ft.FilePicker()
     page.services.append(file_picker)
@@ -66,6 +68,7 @@ def main(page: ft.Page):
         "/historial": historial,
         "/consejos":  consejos,
         "/camera":    camera_view,
+        "/login":     auth_view,
         "/config":    None,  # Handled specially below
     }
 
@@ -84,8 +87,14 @@ def main(page: ft.Page):
     # Inyectar función de navegación en la página para uso en vistas
     page.navigate = navigate
 
-    # Cargar vista inicial
-    navigate("/")
+    # Validar sesión
+    from core.db_client import db
+    session = db.get_session()
+    
+    if session:
+        navigate("/")
+    else:
+        navigate("/login")
 
 
 if __name__ == "__main__":

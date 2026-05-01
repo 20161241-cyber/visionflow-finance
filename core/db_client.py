@@ -74,12 +74,31 @@ class SupabaseClient:
 
     # ─── Autenticación ────────────────────────────────────────────────────────
 
-    def registrar_usuario(self, email: str, password: str) -> dict:
-        """Crea un nuevo usuario en Supabase Auth."""
-        if self.offline:
-            return {"exito": False, "error": "Modo offline"}
+    def get_session(self):
+        """Devuelve la sesión actual si el token sigue siendo válido."""
+        if self.offline or not self._client:
+            return None
         try:
-            resp = self._client.auth.sign_up({"email": email, "password": password})
+            return self._client.auth.get_session()
+        except Exception:
+            return None
+
+    def registrar_usuario(self, email: str, password: str, nombre: str = "") -> dict:
+        """Crea un nuevo usuario en Supabase Auth inyectando metadata para los Triggers."""
+        if self.offline:
+            return {"exito": False, "error": "Modo offline. No hay conexión a Supabase."}
+        try:
+            # Enviar metadata 'name' para que el trigger lo capture en raw_user_meta_data
+            payload = {
+                "email": email,
+                "password": password,
+            }
+            if nombre:
+                payload["options"] = {
+                    "data": {"name": nombre}
+                }
+                
+            resp = self._client.auth.sign_up(payload)
             self._usuario_id = resp.user.id if resp.user else None
             return {"exito": True, "usuario_id": self._usuario_id}
         except Exception as e:
