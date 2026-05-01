@@ -32,7 +32,7 @@ jobs:
       - name: Build Flet APK
         shell: bash
         run: |
-          uv run flet build apk --yes --verbose
+          uv run flet build apk --yes --no-interactive --verbose
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v5.0.0
