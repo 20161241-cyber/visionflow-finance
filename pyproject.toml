@@ -11,10 +11,8 @@ dependencies = [
     "Pillow>=10.0.0",
 ]
 
-[tool.flet]
-app.module = "main"
-app.path = "."
-
 [tool.flet.app]
+module = "main"
+path = "."
 org = "com.visionflow.finance"
 product = "VisionFlow Finance"
