@@ -49,14 +49,14 @@ class CameraView:
     def build(self) -> ft.Control:
         content_control = self.camera if self.camera else ft.Container(
             content=ft.Text("Cámara no soportada en Desktop.\nUsa el botón Galería o compila el APK.", text_align=ft.TextAlign.CENTER, color="white"),
-            alignment=ft.alignment.Alignment.CENTER,
+            alignment=ft.Alignment.CENTER,
             bgcolor="black",
         )
         return ft.Stack([
             ft.Container(
                 content=content_control,
                 expand=True,
-                alignment=ft.alignment.Alignment.CENTER,
+                alignment=ft.Alignment.CENTER,
             ),
             # Botón flotante para cerrar
             ft.Container(
@@ -78,6 +78,6 @@ class CameraView:
                 ),
                 bottom=40,
                 right=self.page.window.width / 2 - 28 if self.page.window.width else 100, # Centro aprox
-                alignment=ft.alignment.Alignment.BOTTOM_CENTER,
+                alignment=ft.Alignment.BOTTOM_CENTER,
             )
         ], expand=True)

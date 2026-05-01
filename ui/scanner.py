@@ -138,7 +138,7 @@ class ScannerView:
                         height=80,
                         width=120,
                         border_radius=14,
-                        alignment=ft.alignment.Alignment.CENTER,
+                        alignment=ft.Alignment.CENTER,
                         on_click=self._ir_a_camara,
                     ),
                     ft.Container(
@@ -150,7 +150,7 @@ class ScannerView:
                         height=80,
                         width=120,
                         border_radius=14,
-                        alignment=ft.alignment.Alignment.CENTER,
+                        alignment=ft.Alignment.CENTER,
                         on_click=self._abrir_selector,
                     ),
                 ], alignment=ft.MainAxisAlignment.CENTER, spacing=16),
@@ -171,7 +171,7 @@ class ScannerView:
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=8),
-            alignment=ft.alignment.Alignment.CENTER,
+            alignment=ft.Alignment.CENTER,
             expand=True,
         )
 
@@ -182,7 +182,7 @@ class ScannerView:
                     ft.Text("Analizando ticket...", size=16, color="#00F5C4"),
                     ft.Text("OCR en proceso", size=12, color="#718096"),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=16),
-                alignment=ft.alignment.Alignment.CENTER,
+                alignment=ft.Alignment.CENTER,
                 expand=True,
             )
 
@@ -190,8 +190,8 @@ class ScannerView:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.TOP_LEFT,
-                end=ft.alignment.BOTTOM_RIGHT,
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )
@@ -246,8 +246,8 @@ class ScannerView:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.TOP_LEFT,
-                end=ft.alignment.BOTTOM_RIGHT,
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )
@@ -320,7 +320,7 @@ class ScannerView:
                         bgcolor="#00F5C4",
                         height=56,
                         border_radius=16,
-                        alignment=ft.alignment.CENTER,
+                        alignment=ft.Alignment.CENTER,
                         on_click=self._confirmar_gasto,
                     ),
                     margin=ft.Margin.symmetric(horizontal=20),

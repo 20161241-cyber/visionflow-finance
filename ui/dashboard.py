@@ -41,7 +41,7 @@ class DashboardView:
                     ft.Text("📊", size=48),
                     ft.Text("Sin gastos aún", color="#4A5568", size=14),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                alignment=ft.alignment.Alignment.CENTER,
+                alignment=ft.Alignment.CENTER,
                 height=200,
             )
 
@@ -92,7 +92,7 @@ class DashboardView:
 
         return ft.Container(
             content=ft.Image("data:image/svg+xml;base64," + _svg_to_b64(svg_content), width=200, height=200),
-            alignment=ft.alignment.Alignment.CENTER,
+            alignment=ft.Alignment.CENTER,
         )
 
     # ─── Leyenda de categorías ─────────────────────────────────────────────────
@@ -285,7 +285,7 @@ class DashboardView:
                                     height=52,
                                     width=260,
                                     border_radius=14,
-                                    alignment=ft.alignment.Alignment.CENTER,
+                                    alignment=ft.Alignment.CENTER,
                                     on_click=guardar_config,
                                 ),
                                 ft.Container(height=8),
@@ -296,7 +296,7 @@ class DashboardView:
                                     height=40,
                                     width=260,
                                     border_radius=14,
-                                    alignment=ft.alignment.Alignment.CENTER,
+                                    alignment=ft.Alignment.CENTER,
                                     on_click=cancelar,
                                 ),
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4),
@@ -569,7 +569,7 @@ class DashboardView:
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             ft.Container(
                 content=ft.Image("data:image/svg+xml;base64," + b64_svg, fit="contain"),
-                height=180, padding=10, alignment=ft.alignment.Alignment(0, 0)
+                height=180, padding=10, alignment=ft.Alignment(0, 0)
             ),
             ft.Row([
                 ft.Container(bgcolor="#00F5C4", width=10, height=10, border_radius=5),
@@ -595,8 +595,8 @@ class DashboardView:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.TOP_LEFT,
-                end=ft.alignment.BOTTOM_RIGHT,
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )

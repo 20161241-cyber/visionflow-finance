@@ -31,7 +31,7 @@ class HistorialView:
                     padding=10,
                     width=48,
                     height=48,
-                    alignment=ft.alignment.Alignment.CENTER,
+                    alignment=ft.Alignment.CENTER,
                     blur=ft.Blur(10, 10, ft.BlurTileMode.MIRROR),
                 ),
                 ft.Column([
@@ -62,7 +62,7 @@ class HistorialView:
                     ft.Text("Sin transacciones aún", size=16, color="#4A5568"),
                     ft.Text("Escanea tu primer ticket 📸", size=13, color="#718096"),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
-                alignment=ft.alignment.Alignment.CENTER,
+                alignment=ft.Alignment.CENTER,
                 expand=True,
             )]
         )
@@ -71,8 +71,8 @@ class HistorialView:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.TOP_LEFT,
-                end=ft.alignment.BOTTOM_RIGHT,
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )

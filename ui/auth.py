@@ -49,12 +49,12 @@ class AuthView:
             padding=30,
             border_radius=20,
             width=350,
-            alignment=ft.alignment.Alignment.CENTER
+            alignment=ft.Alignment.CENTER
         )
 
         return ft.Container(
             content=tarjeta_auth,
-            alignment=ft.alignment.Alignment.CENTER,
+            alignment=ft.Alignment.CENTER,
             expand=True
         )
 

@@ -208,7 +208,7 @@ Estado Financiero Actual del Usuario:
                 bgcolor="#7B61FF",
                 padding=ft.Padding.symmetric(horizontal=14, vertical=10),
                 border_radius=ft.border_radius.only(top_left=14, top_right=14, bottom_left=14, bottom_right=0),
-                alignment=ft.alignment.Alignment.CENTER_RIGHT,
+                alignment=ft.Alignment.CENTER_RIGHT,
             )
             row = ft.Row([ft.Container(expand=True), msg_ui], alignment=ft.MainAxisAlignment.END)
         else:
@@ -218,7 +218,7 @@ Estado Financiero Actual del Usuario:
                 bgcolor="#00F5C4",
                 padding=ft.Padding.symmetric(horizontal=14, vertical=10),
                 border_radius=ft.border_radius.only(top_left=14, top_right=14, bottom_left=0, bottom_right=14),
-                alignment=ft.alignment.Alignment.CENTER_LEFT,
+                alignment=ft.Alignment.CENTER_LEFT,
             )
             row = ft.Row([ft.Text("🤖", size=20), msg_ui, ft.Container(expand=True)], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START)
             
@@ -330,8 +330,8 @@ Estado Financiero Actual del Usuario:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.TOP_LEFT,
-                end=ft.alignment.BOTTOM_RIGHT,
+                begin=ft.Alignment.TOP_LEFT,
+                end=ft.Alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )
