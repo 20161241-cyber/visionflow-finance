@@ -74,9 +74,9 @@ class ConsejosView:
                 ft.Text(cuerpo, size=13, color="#CBD5E0"),
             ], spacing=8),
             bgcolor="#111827",
-            border=ft.border.only(left=ft.BorderSide(3, color)),
+            border=ft.Border.only(left=ft.BorderSide(3, color)),
             border_radius=12,
-            padding=ft.padding.symmetric(horizontal=16, vertical=14),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=14),
         )
 
     def _meta_ahorro(self, estado) -> ft.Control:
@@ -95,7 +95,7 @@ class ConsejosView:
                 ft.Text("Un fondo de emergencia en 3 meses 🎯", size=12, color="#718096"),
             ], spacing=6),
             bgcolor="#0D2518",
-            border=ft.border.all(1, "#00F5C4"),
+            border=ft.Border.all(1, "#00F5C4"),
             border_radius=16,
             padding=20,
         )
@@ -113,7 +113,7 @@ class ConsejosView:
                                       on_click=lambda _: self.page.navigate("/")),
                         ft.Text("Consejos de Ahorro", size=18, weight=ft.FontWeight.BOLD, color="white"),
                     ]),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
                 ft.Container(
                     content=ft.Column([
@@ -123,7 +123,7 @@ class ConsejosView:
                                 color="#718096"),
                         *[self._tarjeta_consejo(*c) for c in consejos],
                     ], spacing=12, scroll=ft.ScrollMode.AUTO),
-                    padding=ft.padding.symmetric(horizontal=20),
+                    padding=ft.Padding.symmetric(horizontal=20),
                     expand=True,
                 ),
                 ft.Container(height=80),

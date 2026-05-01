@@ -41,7 +41,7 @@ class DashboardView:
                     ft.Text("📊", size=48),
                     ft.Text("Sin gastos aún", color="#4A5568", size=14),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                alignment=ft.alignment.center,
+                alignment=ft.alignment.Alignment.CENTER,
                 height=200,
             )
 
@@ -92,7 +92,7 @@ class DashboardView:
 
         return ft.Container(
             content=ft.Image(src_base64=_svg_to_b64(svg_content), width=200, height=200),
-            alignment=ft.alignment.center,
+            alignment=ft.alignment.Alignment.CENTER,
         )
 
     # ─── Leyenda de categorías ─────────────────────────────────────────────────
@@ -126,9 +126,9 @@ class DashboardView:
                 ], spacing=2, expand=True),
             ], spacing=12),
             bgcolor="#2D1B1B",
-            border=ft.border.all(1, "#FF4444"),
+            border=ft.Border.all(1, "#FF4444"),
             border_radius=12,
-            padding=ft.padding.symmetric(horizontal=16, vertical=12),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=12),
         )
 
     # ─── Panel de configuración de presupuesto ───────────────────────────────
@@ -191,7 +191,7 @@ class DashboardView:
                         ),
                         ft.Text("Ajustar Presupuesto", size=18, weight=ft.FontWeight.BOLD, color="white"),
                     ]),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
                 ft.Container(
                     content=ft.Column([
@@ -203,7 +203,7 @@ class DashboardView:
                                 ft.Text("Establece tu monto disponible y los días\nhasta tu próximo ingreso.",
                                         size=13, color="#718096", text_align=ft.TextAlign.CENTER),
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
-                            padding=ft.padding.symmetric(vertical=20),
+                            padding=ft.Padding.symmetric(vertical=20),
                         ),
                         ft.Container(
                             content=ft.Column([
@@ -219,7 +219,7 @@ class DashboardView:
                                     height=52,
                                     width=260,
                                     border_radius=14,
-                                    alignment=ft.alignment.center,
+                                    alignment=ft.alignment.Alignment.CENTER,
                                     on_click=guardar_config,
                                 ),
                                 ft.Container(height=8),
@@ -230,14 +230,14 @@ class DashboardView:
                                     height=40,
                                     width=260,
                                     border_radius=14,
-                                    alignment=ft.alignment.center,
+                                    alignment=ft.alignment.Alignment.CENTER,
                                     on_click=cancelar,
                                 ),
                             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4),
                             bgcolor="#111827",
                             border_radius=20,
                             padding=24,
-                            margin=ft.margin.symmetric(horizontal=20),
+                            margin=ft.Margin.symmetric(horizontal=20),
                         ),
                         ft.Container(height=20),
                         ft.Container(
@@ -262,8 +262,8 @@ class DashboardView:
                             ], spacing=8),
                             bgcolor="#0D1117",
                             border_radius=12,
-                            padding=ft.padding.symmetric(horizontal=16, vertical=12),
-                            margin=ft.margin.symmetric(horizontal=20),
+                            padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+                            margin=ft.Margin.symmetric(horizontal=20),
                         ),
                     ], spacing=8, scroll=ft.ScrollMode.AUTO),
                     expand=True,
@@ -294,7 +294,7 @@ class DashboardView:
                     on_click=lambda _: self.page.navigate("/config"),
                 ),
             ]),
-            padding=ft.padding.symmetric(horizontal=20, vertical=16),
+            padding=ft.Padding.symmetric(horizontal=20, vertical=16),
         )
 
         # ── Tarjeta presupuesto diario ──
@@ -314,7 +314,7 @@ class DashboardView:
                         ),
                         bgcolor=semaforo_color,
                         border_radius=20,
-                        padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                        padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                     ),
                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                 ft.Text(
@@ -339,7 +339,7 @@ class DashboardView:
             bgcolor="#111827",
             border_radius=20,
             padding=20,
-            margin=ft.margin.symmetric(horizontal=20),
+            margin=ft.Margin.symmetric(horizontal=20),
         )
 
         # ── Sección gráfico ──
@@ -354,7 +354,7 @@ class DashboardView:
             bgcolor="#111827",
             border_radius=20,
             padding=20,
-            margin=ft.margin.symmetric(horizontal=20),
+            margin=ft.Margin.symmetric(horizontal=20),
         )
 
         # ── Alertas Hormiga ──
@@ -371,7 +371,7 @@ class DashboardView:
             bgcolor="#111827",
             border_radius=20,
             padding=20,
-            margin=ft.margin.symmetric(horizontal=20),
+            margin=ft.Margin.symmetric(horizontal=20),
         ) if alertas else ft.Container(
             content=ft.Row([
                 ft.Text("✅", size=20),
@@ -379,8 +379,8 @@ class DashboardView:
             ], spacing=10),
             bgcolor="#0D2518",
             border_radius=12,
-            padding=ft.padding.symmetric(horizontal=20, vertical=14),
-            margin=ft.margin.symmetric(horizontal=20),
+            padding=ft.Padding.symmetric(horizontal=20, vertical=14),
+            margin=ft.Margin.symmetric(horizontal=20),
         )
 
         # ── Navegación inferior ──
@@ -452,6 +452,6 @@ def _build_nav_bar(page: ft.Page, activo: str) -> ft.Control:
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
         ),
         bgcolor="#0D1117",
-        border=ft.border.only(top=ft.BorderSide(1, "#1F2937")),
-        padding=ft.padding.symmetric(vertical=12, horizontal=16),
+        border=ft.Border.only(top=ft.BorderSide(1, "#1F2937")),
+        padding=ft.Padding.symmetric(vertical=12, horizontal=16),
     )

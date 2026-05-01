@@ -32,14 +32,16 @@ class ScannerView:
         self._picker = picker
 
     # ─── Abrir selector nativo (Cámara o Galería) ────────────────────────────
-    def _abrir_selector(self, e):
+    async def _abrir_selector(self, e):
         """Abre el FilePicker. En móviles, el OS da la opción de usar la Cámara."""
         if self._picker:
-            self._picker.pick_files(
+            files = await self._picker.pick_files(
                 allow_multiple=False,
                 file_type=ft.FilePickerFileType.IMAGE,
                 dialog_title="Selecciona o toma una foto del ticket"
             )
+            if files and len(files) > 0:
+                self._procesar_imagen(files[0].path)
 
     # ─── Procesar imagen ─────────────────────────────────────────────────────
     def _procesar_imagen(self, ruta: str):
@@ -123,7 +125,7 @@ class ScannerView:
                     height=56,
                     width=250,
                     border_radius=14,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment.CENTER,
                     on_click=self._abrir_selector,
                 ),
 
@@ -138,12 +140,12 @@ class ScannerView:
                             size=11, color="#4A5568",
                         ),
                     ], spacing=6),
-                    padding=ft.padding.symmetric(horizontal=20),
+                    padding=ft.Padding.symmetric(horizontal=20),
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=8),
-            alignment=ft.alignment.center,
+            alignment=ft.alignment.Alignment.CENTER,
             expand=True,
         )
 
@@ -154,7 +156,7 @@ class ScannerView:
                     ft.Text("Analizando ticket...", size=16, color="#00F5C4"),
                     ft.Text("OCR en proceso", size=12, color="#718096"),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=16),
-                alignment=ft.alignment.center,
+                alignment=ft.alignment.Alignment.CENTER,
                 expand=True,
             )
 
@@ -169,7 +171,7 @@ class ScannerView:
                         ),
                         ft.Text("Escanear Ticket", size=18, weight=ft.FontWeight.BOLD, color="white"),
                     ]),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
                 area_drop,
                 ft.Container(height=80),
@@ -197,7 +199,7 @@ class ScannerView:
                     ], spacing=12),
                     bgcolor="#111827",
                     border_radius=10,
-                    padding=ft.padding.symmetric(horizontal=14, vertical=8),
+                    padding=ft.Padding.symmetric(horizontal=14, vertical=8),
                 )
             )
 
@@ -216,10 +218,10 @@ class ScannerView:
                             content=ft.Text(f"{res.confianza:.0f}%", size=11, color="#0A0F1E", weight=ft.FontWeight.BOLD),
                             bgcolor="#00F5C4" if res.confianza > 70 else "#FFD166",
                             border_radius=20,
-                            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                            padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                         ),
                     ]),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
                 # Total detectado
                 ft.Container(
@@ -239,7 +241,7 @@ class ScannerView:
                     bgcolor="#111827",
                     border_radius=16,
                     padding=20,
-                    margin=ft.margin.symmetric(horizontal=20),
+                    margin=ft.Margin.symmetric(horizontal=20),
                 ),
                 ft.Container(height=8),
                 # Lista artículos
@@ -252,7 +254,7 @@ class ScannerView:
                     bgcolor="#111827",
                     border_radius=16,
                     padding=20,
-                    margin=ft.margin.symmetric(horizontal=20),
+                    margin=ft.Margin.symmetric(horizontal=20),
                     height=320,
                 ),
                 ft.Container(height=12),
@@ -264,10 +266,10 @@ class ScannerView:
                         bgcolor="#00F5C4",
                         height=56,
                         border_radius=16,
-                        alignment=ft.alignment.center,
+                        alignment=ft.alignment.Alignment.CENTER,
                         on_click=self._confirmar_gasto,
                     ),
-                    margin=ft.margin.symmetric(horizontal=20),
+                    margin=ft.Margin.symmetric(horizontal=20),
                 ),
                 ft.Container(height=80),
             ], scroll=ft.ScrollMode.AUTO, expand=True),

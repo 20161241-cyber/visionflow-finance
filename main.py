@@ -52,11 +52,7 @@ def main(page: ft.Page):
     historial = HistorialView(page, budget_engine)
     consejos  = ConsejosView(page, budget_engine)
 
-    def on_file_picked(e: ft.FilePickerResultEvent):
-        if e.files and len(e.files) > 0:
-            scanner._procesar_imagen(e.files[0].path)
-
-    file_picker = ft.FilePicker(on_result=on_file_picked)
+    file_picker = ft.FilePicker()
     page.overlay.append(file_picker)
     
     # Inyectar el picker para que el scanner pueda llamarlo
@@ -91,4 +87,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main, assets_dir="assets")
+    ft.run(main, assets_dir="assets")

@@ -31,7 +31,7 @@ class HistorialView:
                     padding=10,
                     width=48,
                     height=48,
-                    alignment=ft.alignment.center,
+                    alignment=ft.alignment.Alignment.CENTER,
                 ),
                 ft.Column([
                     ft.Text(tx.descripcion, size=13, color="white",
@@ -43,7 +43,7 @@ class HistorialView:
             ], spacing=12),
             bgcolor="#111827",
             border_radius=12,
-            padding=ft.padding.symmetric(horizontal=16, vertical=12),
+            padding=ft.Padding.symmetric(horizontal=16, vertical=12),
         )
 
     def build(self) -> ft.Control:
@@ -59,7 +59,7 @@ class HistorialView:
                     ft.Text("Sin transacciones aún", size=16, color="#4A5568"),
                     ft.Text("Escanea tu primer ticket 📸", size=13, color="#718096"),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
-                alignment=ft.alignment.center,
+                alignment=ft.alignment.Alignment.CENTER,
                 expand=True,
             )]
         )
@@ -76,14 +76,14 @@ class HistorialView:
                                             weight=ft.FontWeight.BOLD),
                             bgcolor="#7B61FF",
                             border_radius=20,
-                            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                            padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                         ),
                     ]),
-                    padding=ft.padding.symmetric(horizontal=12, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
                 ft.Container(
                     content=ft.Column(contenido, spacing=8, scroll=ft.ScrollMode.AUTO),
-                    padding=ft.padding.symmetric(horizontal=20),
+                    padding=ft.Padding.symmetric(horizontal=20),
                     expand=True,
                 ),
                 ft.Container(height=80),
