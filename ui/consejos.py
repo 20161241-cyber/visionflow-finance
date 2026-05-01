@@ -85,12 +85,13 @@ class ConsejosView:
                     ft.Text(emoji, size=24),
                     ft.Text(titulo, size=14, weight=ft.FontWeight.BOLD, color=color),
                 ], spacing=10),
-                ft.Text(cuerpo, size=13, color="#CBD5E0"),
+                ft.Text(cuerpo, size=13, color="#E2E8F0"),
             ], spacing=8),
-            bgcolor="#111827",
-            border=ft.Border.only(left=ft.BorderSide(3, color)),
+            bgcolor="#0AFFFFFF",
+            border=ft.Border.all(1, "#1AFFFFFF"),
             border_radius=12,
             padding=ft.Padding.symmetric(horizontal=16, vertical=14),
+            blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
         )
 
     # ─── Lógica del Chat IA ──────────────────────────────────────────────────
@@ -149,6 +150,13 @@ class ConsejosView:
 
         # Contexto financiero actual
         estado = self.budget.estado_presupuesto()
+        # Historial de transacciones para la IA
+        historial_str = "No hay transacciones registradas aún."
+        if self.budget.transacciones:
+            txs = self.budget.transacciones[:20] # Últimas 20 para no ahogar el contexto
+            lineas = [f"- {t.fecha}: {t.descripcion} | {t.categoria} | ${t.monto:.2f}" for t in txs]
+            historial_str = "\n".join(lineas)
+
         contexto_financiero = f"""
 Eres VisionFlow IA, un experto planificador financiero y matemático riguroso. Tu objetivo es ayudar al usuario a gestionar su dinero con exactitud.
 
@@ -157,6 +165,7 @@ Reglas estrictas para tus respuestas:
 2. Sumatorias y Desgloses: Muestra siempre el desglose paso a paso de tus cálculos matemáticos (ej. Costo total / Días = Ahorro diario requerido). Suma los gastos diarios para demostrar que el plan cuadra perfectamente.
 3. Razonamiento: Piensa lógicamente antes de dar la respuesta dependiendo de la pregunta. Si la compra supera el saldo restante, adviértele matemáticamente por qué no es viable sin endeudarse. Si es viable, dale el plan exacto.
 4. Tono: Eres empático pero extremadamente analítico y estructurado. Usa listas o viñetas para desglosar presupuestos diarios.
+5. Análisis de Historial: Cuando el usuario te pregunte en qué ha gastado, analiza la tabla de 'Últimas Transacciones' provista abajo, suma los montos por categoría si es necesario, e identifica patrones (Gastos Hormiga).
 
 Estado Financiero Actual del Usuario:
 - Presupuesto inicial: ${estado.saldo_inicial:.2f}
@@ -164,6 +173,9 @@ Estado Financiero Actual del Usuario:
 - Saldo restante en su cuenta: ${estado.saldo_actual:.2f}
 - Días restantes en la quincena/mes: {estado.dias_restantes} días
 - Límite de gasto diario actual: ${estado.presupuesto_diario:.2f}
+
+Últimas Transacciones del Usuario:
+{historial_str}
         """
 
         mensajes_api = [{"role": "system", "content": contexto_financiero}]
@@ -232,12 +244,15 @@ Estado Financiero Actual del Usuario:
                             f"${ahorro_posible:.2f}/día → ${ahorro_posible*30:.2f}/mes",
                             size=20, weight=ft.FontWeight.BOLD, color="#00F5C4", font_family="JetBrains",
                         ),
-                        ft.Text("Fondo de emergencia 🎯", size=12, color="#718096"),
+                        ft.Text("Fondo de emergencia 🎯", size=12, color="#E2E8F0"),
                     ], spacing=6),
-                    bgcolor="#0D2518", border=ft.Border.all(1, "#00F5C4"), border_radius=16, padding=20,
+                    bgcolor="#0AFFFFFF", 
+                    border=ft.Border.all(1, "#00F5C4"), 
+                    border_radius=16, padding=20,
+                    blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
                 ),
                 ft.Container(height=4),
-                ft.Text("Consejos para ti hoy", size=14, weight=ft.FontWeight.W_600, color="#718096"),
+                ft.Text("Consejos para ti hoy", size=14, weight=ft.FontWeight.W_600, color="#E2E8F0"),
                 *[self._tarjeta_consejo(*c) for c in consejos],
             ], spacing=12, scroll=ft.ScrollMode.AUTO),
             padding=ft.Padding.symmetric(horizontal=20, vertical=10),
@@ -311,11 +326,22 @@ Estado Financiero Actual del Usuario:
 
         tabs = ft.Row([self.btn_tips, self.btn_chat], alignment=ft.MainAxisAlignment.CENTER, spacing=20)
 
+        # Background Gradient
+        bg_gradient = ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
+            )
+        )
+
         return ft.Stack([
+            bg_gradient,
             ft.Column([
                 ft.Container(
                     content=ft.Row([
-                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#718096", on_click=lambda _: self.page.navigate("/")),
+                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#E2E8F0", on_click=lambda _: self.page.navigate("/")),
                         ft.Text("Consejos y Chat IA", size=18, weight=ft.FontWeight.BOLD, color="white"),
                     ]),
                     padding=ft.Padding.symmetric(horizontal=12, vertical=16),

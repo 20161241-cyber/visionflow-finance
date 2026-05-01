@@ -340,7 +340,39 @@ class DashboardView:
         ], expand=True)
 
     # ─── Build principal ──────────────────────────────────────────────────────
+    def _glass_card(self, content: ft.Control, margin=None, padding=20, border_radius=20) -> ft.Container:
+        if margin is None:
+            margin = ft.Margin.symmetric(horizontal=20)
+        card = ft.Container(
+            content=content,
+            bgcolor="#0AFFFFFF", # Cristal oscuro
+            border=ft.Border.all(1, "#1AFFFFFF"), # Reflejo del cristal
+            border_radius=border_radius,
+            padding=padding,
+            margin=margin,
+            blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
+            opacity=0,
+            offset=ft.transform.Offset(0, 0.2),
+            animate_opacity=400,
+            animate_offset=ft.animation.Animation(400, ft.AnimationCurve.DECELERATE),
+        )
+        self.animated_cards.append(card)
+        return card
+
+    async def _animar_cascada(self, cards):
+        import asyncio
+        await asyncio.sleep(0.1)
+        for c in cards:
+            try:
+                c.opacity = 1
+                c.offset = ft.transform.Offset(0, 0)
+                c.update()
+                await asyncio.sleep(0.08)
+            except Exception:
+                pass
+
     def build(self) -> ft.Control:
+        self.animated_cards = []
         if self.budget.is_first_time:
             self._mostrar_onboarding_dialog()
             
@@ -401,24 +433,20 @@ class DashboardView:
 
         # ── Tarjeta de Meta ──
         if self.budget.meta_nombre:
-            meta_card = ft.Container(
-                content=ft.Row([
-                    ft.Text("✨ Meta:", size=13, color="#7B61FF", weight=ft.FontWeight.BOLD),
-                    ft.Text(f"{self.budget.meta_nombre} (${self.budget.meta_monto:.2f})", size=13, color="white", expand=True),
-                    ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_size=16, icon_color="#718096", on_click=abrir_dialogo_meta)
-                ]),
-                bgcolor="#111827", padding=10, border_radius=12, margin=ft.Margin.symmetric(horizontal=20)
-            )
+            meta_content = ft.Row([
+                ft.Text("✨ Meta:", size=13, color="#7B61FF", weight=ft.FontWeight.BOLD),
+                ft.Text(f"{self.budget.meta_nombre} (${self.budget.meta_monto:.2f})", size=13, color="white", expand=True),
+                ft.IconButton(ft.Icons.EDIT_ROUNDED, icon_size=16, icon_color="#718096", on_click=abrir_dialogo_meta)
+            ])
+            meta_card = self._glass_card(meta_content, padding=10, border_radius=12)
         else:
-            meta_card = ft.Container(
-                content=ft.Row([
-                    ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE_ROUNDED, color="#718096", size=16),
-                    ft.Text("Fijar una meta de ahorro (Deseo/Placer)", size=13, color="#718096")
-                ], alignment=ft.MainAxisAlignment.CENTER),
-                bgcolor="#111827", padding=10, border_radius=12, margin=ft.Margin.symmetric(horizontal=20),
-                on_click=abrir_dialogo_meta,
-                ink=True
-            )
+            meta_content = ft.Row([
+                ft.Icon(ft.Icons.ADD_CIRCLE_OUTLINE_ROUNDED, color="#718096", size=16),
+                ft.Text("Fijar una meta de ahorro (Deseo/Placer)", size=13, color="#718096")
+            ], alignment=ft.MainAxisAlignment.CENTER)
+            meta_card = self._glass_card(meta_content, padding=10, border_radius=12)
+            meta_card.on_click = abrir_dialogo_meta
+            meta_card.ink = True
 
         # ── Tarjeta presupuesto diario ──
         semaforo_color = (
@@ -426,85 +454,67 @@ class DashboardView:
             else "#FFD166" if estado.porcentaje_utilizado < 85
             else "#FF4444"
         )
-        tarjeta_presupuesto = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    ft.Text("Presupuesto diario", size=12, color="#718096"),
-                    ft.Container(
-                        content=ft.Text(
-                            f"{estado.dias_restantes}d restantes",
-                            size=11, color="#0A0F1E", weight=ft.FontWeight.BOLD,
-                        ),
-                        bgcolor=semaforo_color,
-                        border_radius=20,
-                        padding=ft.Padding.symmetric(horizontal=10, vertical=4),
+        tarjeta_presupuesto_content = ft.Column([
+            ft.Row([
+                ft.Text("Presupuesto diario", size=12, color="#E2E8F0"),
+                ft.Container(
+                    content=ft.Text(
+                        f"{estado.dias_restantes}d restantes",
+                        size=11, color="#0A0F1E", weight=ft.FontWeight.BOLD,
                     ),
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Text(
-                    f"${estado.presupuesto_diario:.2f}",
-                    size=42,
-                    weight=ft.FontWeight.BOLD,
-                    color=semaforo_color,
-                    font_family="JetBrains",
+                    bgcolor=semaforo_color,
+                    border_radius=20,
+                    padding=ft.Padding.symmetric(horizontal=10, vertical=4),
                 ),
-                ft.ProgressBar(
-                    value=min(estado.porcentaje_utilizado / 100, 1.0),
-                    bgcolor="#1F2937",
-                    color=semaforo_color,
-                    bar_height=6,
-                    border_radius=3,
-                ),
-                ft.Row([
-                    ft.Text(f"Gastado: ${estado.total_gastado:.2f}", size=11, color="#718096"),
-                    ft.Text(f"Disponible: ${estado.saldo_actual:.2f}", size=11, color="#718096"),
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-            ], spacing=10),
-            bgcolor="#111827",
-            border_radius=20,
-            padding=20,
-            margin=ft.Margin.symmetric(horizontal=20),
-        )
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Text(
+                f"${estado.presupuesto_diario:.2f}",
+                size=42,
+                weight=ft.FontWeight.BOLD,
+                color=semaforo_color,
+                font_family="JetBrains",
+            ),
+            ft.ProgressBar(
+                value=min(estado.porcentaje_utilizado / 100, 1.0),
+                bgcolor="#1AFFFFFF",
+                color=semaforo_color,
+                bar_height=6,
+                border_radius=3,
+            ),
+            ft.Row([
+                ft.Text(f"Gastado: ${estado.total_gastado:.2f}", size=11, color="#A0AEC0"),
+                ft.Text(f"Disponible: ${estado.saldo_actual:.2f}", size=11, color="#A0AEC0"),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        ], spacing=10)
+        
+        tarjeta_presupuesto = self._glass_card(tarjeta_presupuesto_content)
 
         # ── Sección gráfico ──
-        seccion_grafico = ft.Container(
-            content=ft.Column([
-                ft.Text("Distribución de gastos", size=14, weight=ft.FontWeight.W_600, color="white"),
-                ft.Row([
-                    self._construir_dona(gastos),
-                    ft.Container(content=self._leyenda(gastos), expand=True),
-                ], alignment=ft.MainAxisAlignment.START),
-            ], spacing=12),
-            bgcolor="#111827",
-            border_radius=20,
-            padding=20,
-            margin=ft.Margin.symmetric(horizontal=20),
-        )
+        seccion_grafico_content = ft.Column([
+            ft.Text("Distribución de gastos", size=14, weight=ft.FontWeight.W_600, color="white"),
+            ft.Row([
+                self._construir_dona(gastos),
+                ft.Container(content=self._leyenda(gastos), expand=True),
+            ], alignment=ft.MainAxisAlignment.START),
+        ], spacing=12)
+        seccion_grafico = self._glass_card(seccion_grafico_content)
 
         # ── Alertas Hormiga ──
-        alertas_section = ft.Container(
-            content=ft.Column([
+        if alertas:
+            alertas_content = ft.Column([
                 ft.Row([
                     ft.Text("🐜 Gastos Hormiga", size=14, weight=ft.FontWeight.W_600, color="#FF4444"),
                     ft.Text(f"({len(alertas)})", size=12, color="#718096"),
                 ]),
-                *([self._tarjeta_hormiga(a) for a in alertas]
-                  if alertas
-                  else [ft.Text("✅ Sin alertas esta semana", size=13, color="#48BB78")]),
-            ], spacing=10),
-            bgcolor="#111827",
-            border_radius=20,
-            padding=20,
-            margin=ft.Margin.symmetric(horizontal=20),
-        ) if alertas else ft.Container(
-            content=ft.Row([
+                *([self._tarjeta_hormiga(a) for a in alertas])
+            ], spacing=10)
+            alertas_section = self._glass_card(alertas_content)
+        else:
+            alertas_content = ft.Row([
                 ft.Text("✅", size=20),
                 ft.Text("Sin alertas de Gasto Hormiga esta semana", size=13, color="#48BB78"),
-            ], spacing=10),
-            bgcolor="#0D2518",
-            border_radius=12,
-            padding=ft.Padding.symmetric(horizontal=20, vertical=14),
-            margin=ft.Margin.symmetric(horizontal=20),
-        )
+            ], spacing=10)
+            alertas_section = self._glass_card(alertas_content, padding=14, border_radius=12)
 
         # ── Navegación inferior ──
         nav_bar = _build_nav_bar(self.page, activo="/")
@@ -552,37 +562,47 @@ class DashboardView:
         import base64
         b64_svg = base64.b64encode(svg_grafico.encode('utf-8')).decode('utf-8')
         
-        predictivo_section = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    ft.Text("🔮 Análisis Predictivo", size=14, weight=ft.FontWeight.W_600, color="#7B61FF"),
-                    ft.Text(f"Burn Rate: ${pred['burn_rate']:.2f}/d", size=11, color="#718096"),
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                ft.Container(
-                    content=ft.Image("data:image/svg+xml;base64," + b64_svg, fit="contain"),
-                    height=180, padding=10, alignment=ft.alignment.Alignment(0, 0)
-                ),
-                ft.Row([
-                    ft.Container(bgcolor="#00F5C4", width=10, height=10, border_radius=5),
-                    ft.Text("Gasto Ideal", size=11, color="#718096"),
-                    ft.Container(bgcolor="#FF4444", width=10, height=10, border_radius=5, margin=ft.margin.only(left=10)),
-                    ft.Text("Gasto Real", size=11, color="#718096"),
-                ], alignment=ft.MainAxisAlignment.CENTER)
-            ]),
-            bgcolor="#111827", border_radius=20, padding=20, margin=ft.Margin.symmetric(horizontal=20),
-        )
+        predictivo_content = ft.Column([
+            ft.Row([
+                ft.Text("🔮 Análisis Predictivo", size=14, weight=ft.FontWeight.W_600, color="#7B61FF"),
+                ft.Text(f"Burn Rate: ${pred['burn_rate']:.2f}/d", size=11, color="#718096"),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            ft.Container(
+                content=ft.Image("data:image/svg+xml;base64," + b64_svg, fit="contain"),
+                height=180, padding=10, alignment=ft.alignment.Alignment(0, 0)
+            ),
+            ft.Row([
+                ft.Container(bgcolor="#00F5C4", width=10, height=10, border_radius=5),
+                ft.Text("Gasto Ideal", size=11, color="#E2E8F0"),
+                ft.Container(bgcolor="#FF4444", width=10, height=10, border_radius=5, margin=ft.margin.only(left=10)),
+                ft.Text("Gasto Real", size=11, color="#E2E8F0"),
+            ], alignment=ft.MainAxisAlignment.CENTER)
+        ])
+        predictivo_section = self._glass_card(predictivo_content)
 
         alerta_ia = None
         if pred["alerta"]:
-            alerta_ia = ft.Container(
-                content=ft.Row([
-                    ft.Text("🤖", size=24),
-                    ft.Text(pred["alerta"], size=12, color="#FFD166", expand=True, weight=ft.FontWeight.BOLD)
-                ]),
-                bgcolor="#3B2314", border_radius=12, padding=16, margin=ft.Margin.symmetric(horizontal=20)
+            alerta_ia_content = ft.Row([
+                ft.Text("🤖", size=24),
+                ft.Text(pred["alerta"], size=12, color="#FFD166", expand=True, weight=ft.FontWeight.BOLD)
+            ])
+            alerta_ia = self._glass_card(alerta_ia_content, padding=16, border_radius=12)
+
+        # Trigger animation
+        self.page.run_task(self._animar_cascada, self.animated_cards)
+
+        # Background Gradient
+        bg_gradient = ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.alignment.top_left,
+                end=ft.alignment.bottom_right,
+                colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
+        )
 
         return ft.Stack([
+            bg_gradient,
             ft.Column([
                 header,
                 meta_card,
@@ -592,7 +612,6 @@ class DashboardView:
                 alertas_section,
                 seccion_grafico,
                 ft.Container(height=12),
-                alertas_section,
                 ft.Container(height=80),  # Espacio para nav bar
             ], scroll=ft.ScrollMode.AUTO, expand=True),
             ft.Container(content=nav_bar, bottom=0, left=0, right=0),
@@ -640,7 +659,8 @@ def _build_nav_bar(page: ft.Page, activo: str) -> ft.Control:
             [nav_item(r, i, l) for r, i, l in items],
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
         ),
-        bgcolor="#0D1117",
-        border=ft.Border.only(top=ft.BorderSide(1, "#1F2937")),
+        bgcolor="#08FFFFFF", # Glassmorphism nav bar
+        border=ft.Border.only(top=ft.BorderSide(1, "#1AFFFFFF")),
         padding=ft.Padding.symmetric(vertical=12, horizontal=16),
+        blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
     )
