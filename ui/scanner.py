@@ -114,20 +114,33 @@ class ScannerView:
                 ),
                 ft.Container(height=16),
 
-                # ── Botón Único FilePicker (Cámara/Galería) ──
-                ft.Container(
-                    content=ft.Row([
-                        ft.Icon(ft.Icons.PHOTO_CAMERA_ROUNDED, color="#0A0F1E", size=20),
-                        ft.Text("Tomar Foto / Elegir", size=14, color="#0A0F1E",
-                                weight=ft.FontWeight.BOLD),
-                    ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
-                    bgcolor="#00F5C4",
-                    height=56,
-                    width=250,
-                    border_radius=14,
-                    alignment=ft.alignment.Alignment.CENTER,
-                    on_click=self._abrir_selector,
-                ),
+                # ── Botones Cámara y Galería ──
+                ft.Row([
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Icon(ft.Icons.CAMERA_ALT_ROUNDED, color="#0A0F1E", size=24),
+                            ft.Text("Cámara", size=13, color="#0A0F1E", weight=ft.FontWeight.BOLD),
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=4),
+                        bgcolor="#00F5C4",
+                        height=80,
+                        width=120,
+                        border_radius=14,
+                        alignment=ft.alignment.Alignment.CENTER,
+                        on_click=self._abrir_selector,
+                    ),
+                    ft.Container(
+                        content=ft.Column([
+                            ft.Icon(ft.Icons.IMAGE_ROUNDED, color="#0A0F1E", size=24),
+                            ft.Text("Galería", size=13, color="#0A0F1E", weight=ft.FontWeight.BOLD),
+                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=4),
+                        bgcolor="#7B61FF",
+                        height=80,
+                        width=120,
+                        border_radius=14,
+                        alignment=ft.alignment.Alignment.CENTER,
+                        on_click=self._abrir_selector,
+                    ),
+                ], alignment=ft.MainAxisAlignment.CENTER, spacing=16),
 
                 ft.Container(height=16),
 
