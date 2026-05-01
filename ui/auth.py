@@ -1,5 +1,6 @@
 import flet as ft
 from core.db_client import db
+from core.email_service import enviar_bienvenida_premium
 
 class AuthView:
     def __init__(self, page: ft.Page, budget_engine):
@@ -102,6 +103,11 @@ class AuthView:
                 self.budget.set_user(user_id)
             if self.es_registro:
                 self.budget.is_first_time = True
+                # Send welcome email asynchronously so UI doesn't freeze
+                # The user's name is saved in 'nombre' (local variable above)
+                import threading
+                threading.Thread(target=enviar_bienvenida_premium, args=(email, nombre, "Premium"), daemon=True).start()
+                
             self.page.navigate("/")
         else:
             error_msg = res.get("error", "Error desconocido.")

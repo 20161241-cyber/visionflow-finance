@@ -12,6 +12,7 @@ dependencies = [
     "flet-camera>=0.84.0",
     "groq>=0.11.0",
     "supabase>=2.0.0",
+    "resend>=2.1.0",
 ]
 
 [tool.flet.app]
