@@ -162,25 +162,35 @@ class DashboardView:
         self.page.update()
 
     def _guardar_onboarding(self, e, dlg, tf_saldo, tf_dias, tf_meta_nombre, tf_meta_monto):
+        tf_saldo.error_text = None
+        tf_dias.error_text = None
+        
         try:
-            saldo = float(tf_saldo.value) if tf_saldo.value else 0.0
-            dias = int(tf_dias.value) if tf_dias.value else 15
+            val_saldo = (tf_saldo.value or "").replace(",", "").replace("$", "").strip()
+            val_dias = (tf_dias.value or "").strip()
+            
+            saldo = float(val_saldo) if val_saldo else 0.0
+            dias = int(val_dias) if val_dias else 15
         except ValueError:
-            return # Faltan campos obligatorios o inválidos
+            tf_saldo.error_text = "Ingresa un número válido"
+            dlg.update()
+            return
             
         from datetime import date, timedelta
-        # Asignar fecha_cobro basándonos en los días ingresados
         nueva_fecha_cobro = date.today() + timedelta(days=dias)
-        
         self.budget.resetear(nuevo_saldo=saldo, nueva_fecha_cobro=nueva_fecha_cobro)
         
         # Meta opcional
-        if tf_meta_nombre.value and tf_meta_monto.value:
+        val_meta_nombre = (tf_meta_nombre.value or "").strip()
+        val_meta_monto = (tf_meta_monto.value or "").replace(",", "").replace("$", "").strip()
+        if val_meta_nombre and val_meta_monto:
             try:
-                monto_meta = float(tf_meta_monto.value)
-                self.budget.fijar_meta(tf_meta_nombre.value, monto_meta)
+                monto_meta = float(val_meta_monto)
+                self.budget.fijar_meta(val_meta_nombre, monto_meta)
             except ValueError:
-                pass
+                tf_meta_monto.error_text = "Monto inválido"
+                dlg.update()
+                return
                 
         self.budget.is_first_time = False
         dlg.open = False
