@@ -6,6 +6,8 @@ flet>=0.24.0                    # UI multiplataforma (Mobile + Desktop)
 
 # ─── Procesamiento de Imágenes ───────────────────────────────────────────────
 Pillow>=10.0.0                  # Manipulación de imágenes (Soporte Móvil)
+flet-camera
+groq
 
 # ─── OCR (Solo Desktop — no disponible en Android) ──────────────────────────
 # pytesseract>=0.3.10           # Descomenta si usas la app solo en Desktop

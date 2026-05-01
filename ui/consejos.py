@@ -1,41 +1,39 @@
 """
-consejos.py — Vista de Consejos de Ahorro generados dinámicamente.
-Los consejos se adaptan al estado financiero del usuario.
+consejos.py — Vista de Consejos de Ahorro y Asistente IA Groq.
 """
 
 from __future__ import annotations
 import flet as ft
 from core.budget_engine import BudgetEngine
 from ui.dashboard import _build_nav_bar
+import os
 
+# Flet no soporta importar AsyncGroq si no está instalado (como en algunos entornos), lo cargaremos dinámicamente
+try:
+    import groq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
 
 # ─── Banco de consejos por situación ─────────────────────────────────────────
 
 CONSEJOS_CRITICOS = [
-    ("🚨", "Modo emergencia", "Tu saldo es crítico. Suspende todos los gastos no esenciales hoy mismo. Solo alimentación básica.", "#FF4444"),
-    ("🥡", "Cocina en casa", "Cocinar en casa ahorra hasta $2,500/mes vs comer fuera. Un arroz con huevo cuesta $15 vs $80 en la calle.", "#FF6B6B"),
-    ("📵", "Desactiva notificaciones de apps", "Cada notificación de Rappi o UberEats es una trampa psicológica. Desactívalas hasta cobrar.", "#FC8181"),
+    ("🚨", "Modo emergencia", "Tu saldo es crítico. Suspende todos los gastos no esenciales.", "#FF4444"),
+    ("🥡", "Cocina en casa", "Cocinar en casa ahorra hasta $2,500/mes vs comer fuera.", "#FF6B6B"),
 ]
 
 CONSEJOS_ADVERTENCIA = [
-    ("⚠️", "Revisa tus Gastos Hormiga", "Los pequeños gastos ($15–$80) son invisibles pero devastadores. $50 diarios = $1,500/mes.", "#FFD166"),
-    ("💧", "Lleva agua de casa", "Una botella reutilizable ahorra $600–$900 al mes en bebidas de conveniencia.", "#FBBF24"),
-    ("🛒", "Lista antes de comprar", "Ir al súper sin lista aumenta el gasto hasta 40%. Escribe EXACTAMENTE lo que necesitas.", "#F59E0B"),
-    ("🏧", "Retira efectivo semanal", "Pagar con efectivo duele más psicológicamente. Limítate a un sobre con tu presupuesto semanal.", "#FFD166"),
+    ("⚠️", "Revisa tus Gastos Hormiga", "Los pequeños gastos son invisibles pero devastadores.", "#FFD166"),
+    ("💧", "Lleva agua de casa", "Ahorra $600–$900 al mes en bebidas de conveniencia.", "#FBBF24"),
 ]
 
 CONSEJOS_SALUDABLE = [
-    ("🎯", "Regla 50/30/20", "50% necesidades básicas, 30% gastos personales, 20% ahorro. Ajusta según tu quincena.", "#00F5C4"),
-    ("☕", "Café de olla en casa", "Un café de preparación casera cuesta $4 vs $45 en Starbucks. Ahorro de $1,200/mes.", "#34D399"),
-    ("📦", "Compra al mayoreo", "Frijol, arroz, aceite y papel higiénico al mayoreo = 30% más barato que tiendita.", "#10B981"),
-    ("🎮", "Entretenimiento gratuito", "YouTube, podcasts, bibliotecas públicas, parques. El ocio no tiene que costar nada.", "#00F5C4"),
-    ("🤝", "Comparte suscripciones", "Netflix, Spotify Duo, etc. Dividir entre 2–4 personas puede ahorrarte $150–$300/mes.", "#6EE7B7"),
+    ("🎯", "Regla 50/30/20", "50% necesidades básicas, 30% gastos personales, 20% ahorro.", "#00F5C4"),
+    ("☕", "Café de olla en casa", "Un café casero cuesta $4 vs $45 en Starbucks.", "#34D399"),
 ]
 
 CONSEJOS_HORMIGA = [
-    ("🐜", "El efecto latte", "Si gastas $45 en café 3 veces/semana = $540/mes = $6,480/año. ¿Vale la pena?", "#FF4444"),
-    ("🏪", "Evita las tiendas de conveniencia", "OXXO cobra hasta 40% más que el súper. Planifica y compra en volumen.", "#FF6B6B"),
-    ("🧾", "Fotografía cada ticket", "La conciencia es el primer paso. VisionFlow te ayuda a ver exactamente a dónde va tu dinero.", "#FC8181"),
+    ("🐜", "El efecto latte", "Si gastas $45 en café 3 veces/semana = $540/mes.", "#FF4444"),
 ]
 
 
@@ -43,14 +41,29 @@ class ConsejosView:
     def __init__(self, page: ft.Page, budget: BudgetEngine):
         self.page = page
         self.budget = budget
+        
+        # Estado del Chat IA
+        self.chat_messages = []
+        self.chat_listview = ft.ListView(expand=True, spacing=10, auto_scroll=True)
+        self.chat_input = ft.TextField(
+            hint_text="Pregunta cómo ahorrar...",
+            autofocus=False,
+            shift_enter=True,
+            min_lines=1,
+            max_lines=3,
+            filled=True,
+            expand=True,
+            border_color="#7B61FF",
+            focused_border_color="#00F5C4",
+            border_radius=20,
+            on_submit=self._enviar_mensaje,
+        )
 
     def _seleccionar_consejos(self) -> list[tuple]:
-        """Selecciona consejos según el estado financiero actual."""
         estado = self.budget.estado_presupuesto()
         alertas = self.budget.detectar_gastos_hormiga()
         consejos = []
 
-        # Consejos críticos si gasto > 85%
         if estado.porcentaje_utilizado > 85:
             consejos.extend(CONSEJOS_CRITICOS)
         elif estado.porcentaje_utilizado > 60:
@@ -58,11 +71,10 @@ class ConsejosView:
         else:
             consejos.extend(CONSEJOS_SALUDABLE)
 
-        # Siempre agregar consejos hormiga si hay alertas
         if alertas:
             consejos.extend(CONSEJOS_HORMIGA)
 
-        return consejos[:6]  # Máximo 6 consejos
+        return consejos[:6]
 
     def _tarjeta_consejo(self, emoji: str, titulo: str, cuerpo: str, color: str) -> ft.Control:
         return ft.Container(
@@ -79,53 +91,201 @@ class ConsejosView:
             padding=ft.Padding.symmetric(horizontal=16, vertical=14),
         )
 
-    def _meta_ahorro(self, estado) -> ft.Control:
-        """Tarjeta de meta de ahorro proyectada."""
-        ahorro_posible = max(estado.presupuesto_diario * 0.15, 0)
-        proyeccion_mensual = round(ahorro_posible * 30, 2)
-        return ft.Container(
-            content=ft.Column([
-                ft.Text("💰 Si ahorras 15% diario...", size=13, color="#FFD166",
-                        weight=ft.FontWeight.W_600),
-                ft.Text(
-                    f"${ahorro_posible:.2f}/día → ${proyeccion_mensual:.2f}/mes",
-                    size=20, weight=ft.FontWeight.BOLD, color="#00F5C4",
-                    font_family="JetBrains",
-                ),
-                ft.Text("Un fondo de emergencia en 3 meses 🎯", size=12, color="#718096"),
-            ], spacing=6),
-            bgcolor="#0D2518",
-            border=ft.Border.all(1, "#00F5C4"),
-            border_radius=16,
-            padding=20,
+    # ─── Lógica del Chat IA ──────────────────────────────────────────────────
+
+    def _get_groq_client(self):
+        if not HAS_GROQ:
+            return None
+        api_key = self.page.client_storage.get("groq_api_key")
+        if not api_key:
+            from core.config import GROQ_API_KEY
+            api_key = GROQ_API_KEY
+            
+        if api_key:
+            from groq import AsyncGroq
+            return AsyncGroq(api_key=api_key)
+        return None
+
+    async def _guardar_api_key(self, e):
+        key = self.api_key_input.value.strip()
+        if key:
+            self.page.client_storage.set("groq_api_key", key)
+            self.page.navigate("/consejos")
+
+    async def _enviar_mensaje(self, e):
+        texto = self.chat_input.value.strip()
+        if not texto:
+            return
+
+        self.chat_input.value = ""
+        self.page.update()
+
+        # Mostrar mensaje del usuario
+        self._add_message("user", texto)
+        
+        client = self._get_groq_client()
+        if not client:
+            self._add_message("assistant", "Error: No se encontró la clave de API de Groq o el módulo no está instalado.")
+            return
+
+        # Mostrar "Escribiendo..."
+        loader = ft.ProgressRing(width=16, height=16, color="#00F5C4")
+        loader_container = ft.Container(
+            content=ft.Row([loader, ft.Text("Analizando tus finanzas...", size=12, color="#718096")], spacing=8),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=8)
         )
+        self.chat_listview.controls.append(loader_container)
+        self.page.update()
+
+        # Contexto financiero actual
+        estado = self.budget.estado_presupuesto()
+        contexto_financiero = f"""
+        Eres un asistente financiero empático llamado VisionFlow IA. Hablas en español de forma concisa y amigable.
+        El usuario tiene un presupuesto de {estado.saldo_inicial}, ha gastado {estado.total_gastado} y le quedan {estado.saldo_actual} para los próximos {estado.dias_restantes} días. Su presupuesto diario es de {estado.presupuesto_diario}.
+        """
+
+        mensajes_api = [{"role": "system", "content": contexto_financiero}]
+        for m in self.chat_messages:
+            mensajes_api.append({"role": m["role"], "content": m["content"]})
+        mensajes_api.append({"role": "user", "content": texto})
+
+        try:
+            chat_completion = await client.chat.completions.create(
+                messages=mensajes_api,
+                model="llama3-8b-8192",
+                max_tokens=300,
+            )
+            respuesta = chat_completion.choices[0].message.content
+        except Exception as ex:
+            respuesta = f"Ups, tuve un problema de conexión: {ex}"
+
+        # Remover loader
+        self.chat_listview.controls.remove(loader_container)
+        
+        # Mostrar respuesta
+        self._add_message("assistant", respuesta)
+
+    def _add_message(self, role: str, content: str):
+        if role == "user":
+            self.chat_messages.append({"role": "user", "content": content})
+            msg_ui = ft.Container(
+                content=ft.Text(content, color="white", size=13),
+                bgcolor="#7B61FF",
+                padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+                border_radius=ft.border_radius.only(top_left=14, top_right=14, bottom_left=14, bottom_right=0),
+                alignment=ft.alignment.Alignment.CENTER_RIGHT,
+            )
+            row = ft.Row([ft.Container(expand=True), msg_ui], alignment=ft.MainAxisAlignment.END)
+        else:
+            self.chat_messages.append({"role": "assistant", "content": content})
+            msg_ui = ft.Container(
+                content=ft.Text(content, color="#0A0F1E", size=13),
+                bgcolor="#00F5C4",
+                padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+                border_radius=ft.border_radius.only(top_left=14, top_right=14, bottom_left=0, bottom_right=14),
+                alignment=ft.alignment.Alignment.CENTER_LEFT,
+            )
+            row = ft.Row([ft.Text("🤖", size=20), msg_ui, ft.Container(expand=True)], alignment=ft.MainAxisAlignment.START, vertical_alignment=ft.CrossAxisAlignment.START)
+            
+        self.chat_listview.controls.append(row)
+        self.page.update()
+
+    # ─── Build Principal ─────────────────────────────────────────────────────
 
     def build(self) -> ft.Control:
         nav_bar = _build_nav_bar(self.page, activo="/consejos")
         estado = self.budget.estado_presupuesto()
         consejos = self._seleccionar_consejos()
 
+        # Tab 1: Consejos Estáticos
+        ahorro_posible = max(estado.presupuesto_diario * 0.15, 0)
+        tab_tips = ft.Container(
+            content=ft.Column([
+                ft.Container(height=4),
+                ft.Container(
+                    content=ft.Column([
+                        ft.Text("💰 Si ahorras 15% diario...", size=13, color="#FFD166", weight=ft.FontWeight.W_600),
+                        ft.Text(
+                            f"${ahorro_posible:.2f}/día → ${ahorro_posible*30:.2f}/mes",
+                            size=20, weight=ft.FontWeight.BOLD, color="#00F5C4", font_family="JetBrains",
+                        ),
+                        ft.Text("Fondo de emergencia 🎯", size=12, color="#718096"),
+                    ], spacing=6),
+                    bgcolor="#0D2518", border=ft.Border.all(1, "#00F5C4"), border_radius=16, padding=20,
+                ),
+                ft.Container(height=4),
+                ft.Text("Consejos para ti hoy", size=14, weight=ft.FontWeight.W_600, color="#718096"),
+                *[self._tarjeta_consejo(*c) for c in consejos],
+            ], spacing=12, scroll=ft.ScrollMode.AUTO),
+            padding=ft.Padding.symmetric(horizontal=20, vertical=10),
+        )
+
+        # Tab 2: Chat IA
+        api_key_configured = bool(self._get_groq_client())
+        
+        if not api_key_configured:
+            self.api_key_input = ft.TextField(
+                hint_text="Ingresa tu API Key de Groq (gsk_...)",
+                password=True,
+                can_reveal_password=True,
+                border_color="#7B61FF",
+                focused_border_color="#00F5C4",
+                border_radius=12,
+            )
+            tab_chat = ft.Container(
+                content=ft.Column([
+                    ft.Icon(ft.Icons.LOCK_ROUNDED, size=48, color="#00F5C4"),
+                    ft.Text("Configurar Asistente IA", size=18, weight=ft.FontWeight.BOLD, color="white"),
+                    ft.Text("Por seguridad, la clave se guardará localmente en tu dispositivo.", size=13, color="#718096", text_align=ft.TextAlign.CENTER),
+                    ft.Container(height=16),
+                    self.api_key_input,
+                    ft.ElevatedButton("Guardar y Continuar", bgcolor="#00F5C4", color="#0A0F1E", on_click=self._guardar_api_key)
+                ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=ft.Padding.symmetric(horizontal=20, vertical=40),
+            )
+        else:
+            if len(self.chat_messages) == 0:
+                # Mensaje inicial
+                self._add_message("assistant", "¡Hola! Soy tu asistente financiero impulsado por IA. Puedo analizar tu presupuesto y darte consejos personalizados. ¿En qué te puedo ayudar hoy?")
+                
+            tab_chat = ft.Container(
+                content=ft.Column([
+                    self.chat_listview,
+                    ft.Row([
+                        self.chat_input,
+                        ft.IconButton(
+                            icon=ft.Icons.SEND_ROUNDED,
+                            icon_color="#00F5C4",
+                            on_click=self._enviar_mensaje,
+                        ),
+                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                ]),
+                padding=ft.Padding.symmetric(horizontal=20, vertical=10),
+            )
+
+        tabs = ft.Tabs(
+            selected_index=0,
+            animation_duration=300,
+            tabs=[
+                ft.Tab(text="Tips Rápidos", content=tab_tips),
+                ft.Tab(text="Asistente IA", content=tab_chat),
+            ],
+            expand=True,
+            label_color="#00F5C4",
+            unselected_label_color="#718096",
+            indicator_color="#00F5C4",
+        )
+
         return ft.Stack([
             ft.Column([
                 ft.Container(
                     content=ft.Row([
-                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#718096",
-                                      on_click=lambda _: self.page.navigate("/")),
-                        ft.Text("Consejos de Ahorro", size=18, weight=ft.FontWeight.BOLD, color="white"),
+                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#718096", on_click=lambda _: self.page.navigate("/")),
+                        ft.Text("Consejos y Chat IA", size=18, weight=ft.FontWeight.BOLD, color="white"),
                     ]),
                     padding=ft.Padding.symmetric(horizontal=12, vertical=16),
                 ),
-                ft.Container(
-                    content=ft.Column([
-                        self._meta_ahorro(estado),
-                        ft.Container(height=4),
-                        ft.Text("Consejos para ti hoy", size=14, weight=ft.FontWeight.W_600,
-                                color="#718096"),
-                        *[self._tarjeta_consejo(*c) for c in consejos],
-                    ], spacing=12, scroll=ft.ScrollMode.AUTO),
-                    padding=ft.Padding.symmetric(horizontal=20),
-                    expand=True,
-                ),
+                ft.Container(content=tabs, expand=True),
                 ft.Container(height=80),
             ], expand=True),
             ft.Container(content=nav_bar, bottom=0, left=0, right=0),

@@ -19,6 +19,7 @@ from ui.dashboard import DashboardView
 from ui.scanner import ScannerView
 from ui.historial import HistorialView
 from ui.consejos import ConsejosView
+from ui.camera import CameraView
 from core.budget_engine import BudgetEngine
 
 
@@ -51,6 +52,7 @@ def main(page: ft.Page):
     scanner   = ScannerView(page, budget_engine)
     historial = HistorialView(page, budget_engine)
     consejos  = ConsejosView(page, budget_engine)
+    camera_view = CameraView(page, on_capture=scanner._procesar_imagen)
 
     file_picker = ft.FilePicker()
     page.services.append(file_picker)
@@ -63,6 +65,7 @@ def main(page: ft.Page):
         "/scanner":   scanner,
         "/historial": historial,
         "/consejos":  consejos,
+        "/camera":    camera_view,
         "/config":    None,  # Handled specially below
     }
 

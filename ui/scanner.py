@@ -84,6 +84,9 @@ class ScannerView:
         self._resultado_ocr = None
         self.page.navigate("/")
 
+    def _ir_a_camara(self, e):
+        self.page.navigate("/camera")
+
     # ─── Build ───────────────────────────────────────────────────────────────
     def build(self) -> ft.Control:
         nav_bar = _build_nav_bar(self.page, activo="/scanner")
@@ -126,7 +129,7 @@ class ScannerView:
                         width=120,
                         border_radius=14,
                         alignment=ft.alignment.Alignment.CENTER,
-                        on_click=self._abrir_selector,
+                        on_click=self._ir_a_camara,
                     ),
                     ft.Container(
                         content=ft.Column([
