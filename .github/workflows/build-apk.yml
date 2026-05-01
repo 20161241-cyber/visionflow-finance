@@ -8,7 +8,7 @@ on:
   workflow_dispatch:  # Permite ejecutarlo manualmente desde la web de GitHub
 
 env:
-  UV_PYTHON: "3.12"
+  UV_PYTHON: "3.11"
   PYTHONUTF8: 1
   # Desactivar output interactivo (evita EOFError en CI)
   FLET_CLI_NO_RICH_OUTPUT: 1
