@@ -26,24 +26,27 @@ class HistorialView:
             content=ft.Row([
                 ft.Container(
                     content=ft.Text(_emoji_categoria(tx.categoria), size=20),
-                    bgcolor=f"{color}22",
+                    bgcolor="#0AFFFFFF",
                     border_radius=12,
                     padding=10,
                     width=48,
                     height=48,
                     alignment=ft.alignment.Alignment.CENTER,
+                    blur=ft.Blur(10, 10, ft.BlurTileMode.MIRROR),
                 ),
                 ft.Column([
                     ft.Text(tx.descripcion, size=13, color="white",
                             max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
-                    ft.Text(f"{tx.categoria} · {fecha_str}", size=11, color="#718096"),
+                    ft.Text(f"{tx.categoria} · {fecha_str}", size=11, color="#E2E8F0"),
                 ], expand=True, spacing=2),
                 ft.Text(f"-${tx.monto:.2f}", size=14, color="#FF6B6B",
                         weight=ft.FontWeight.BOLD),
             ], spacing=12),
-            bgcolor="#111827",
+            bgcolor="#0AFFFFFF",
+            border=ft.Border.all(1, "#1AFFFFFF"),
             border_radius=12,
             padding=ft.Padding.symmetric(horizontal=16, vertical=12),
+            blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
         )
 
     def build(self) -> ft.Control:
@@ -64,11 +67,22 @@ class HistorialView:
             )]
         )
 
+        # Background Gradient
+        bg_gradient = ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.alignment.TOP_LEFT,
+                end=ft.alignment.BOTTOM_RIGHT,
+                colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
+            )
+        )
+
         return ft.Stack([
+            bg_gradient,
             ft.Column([
                 ft.Container(
                     content=ft.Row([
-                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#718096",
+                        ft.IconButton(ft.Icons.ARROW_BACK_IOS_ROUNDED, icon_color="#E2E8F0",
                                       on_click=lambda _: self.page.navigate("/")),
                         ft.Text("Historial", size=18, weight=ft.FontWeight.BOLD, color="white"),
                         ft.Container(

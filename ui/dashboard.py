@@ -352,9 +352,9 @@ class DashboardView:
             margin=margin,
             blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
             opacity=0,
-            offset=ft.transform.Offset(0, 0.2),
+            offset=ft.Offset(0, 0.2),
             animate_opacity=400,
-            animate_offset=ft.animation.Animation(400, ft.AnimationCurve.DECELERATE),
+            animate_offset=ft.Animation(400, ft.AnimationCurve.DECELERATE),
         )
         self.animated_cards.append(card)
         return card
@@ -365,7 +365,7 @@ class DashboardView:
         for c in cards:
             try:
                 c.opacity = 1
-                c.offset = ft.transform.Offset(0, 0)
+                c.offset = ft.Offset(0, 0)
                 c.update()
                 await asyncio.sleep(0.08)
             except Exception:
@@ -595,8 +595,8 @@ class DashboardView:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
+                begin=ft.alignment.TOP_LEFT,
+                end=ft.alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )

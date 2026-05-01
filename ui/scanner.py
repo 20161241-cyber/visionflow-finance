@@ -186,13 +186,24 @@ class ScannerView:
                 expand=True,
             )
 
+        # Background Gradient
+        bg_gradient = ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.alignment.TOP_LEFT,
+                end=ft.alignment.BOTTOM_RIGHT,
+                colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
+            )
+        )
+
         return ft.Stack([
+            bg_gradient,
             ft.Column([
                 ft.Container(
                     content=ft.Row([
                         ft.IconButton(
                             icon=ft.Icons.ARROW_BACK_IOS_ROUNDED,
-                            icon_color="#718096",
+                            icon_color="#E2E8F0",
                             on_click=lambda _: self.page.navigate("/"),
                         ),
                         ft.Text("Escanear Ticket", size=18, weight=ft.FontWeight.BOLD, color="white"),
@@ -223,20 +234,33 @@ class ScannerView:
                         ], expand=True, spacing=2),
                         ft.Text(f"${art.precio:.2f}", size=14, color="white", weight=ft.FontWeight.BOLD),
                     ], spacing=12),
-                    bgcolor="#111827",
+                    bgcolor="#0AFFFFFF",
+                    border=ft.Border.all(1, "#1AFFFFFF"),
                     border_radius=10,
                     padding=ft.Padding.symmetric(horizontal=14, vertical=8),
+                    blur=ft.Blur(10, 10, ft.BlurTileMode.MIRROR),
                 )
             )
 
+        # Background Gradient
+        bg_gradient = ft.Container(
+            expand=True,
+            gradient=ft.LinearGradient(
+                begin=ft.alignment.TOP_LEFT,
+                end=ft.alignment.BOTTOM_RIGHT,
+                colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
+            )
+        )
+
         return ft.Stack([
+            bg_gradient,
             ft.Column([
                 # Header
                 ft.Container(
                     content=ft.Row([
                         ft.IconButton(
                             icon=ft.Icons.CLOSE,
-                            icon_color="#718096",
+                            icon_color="#E2E8F0",
                             on_click=lambda _: self._cancelar(),
                         ),
                         ft.Text("Resultado OCR", size=18, weight=ft.FontWeight.BOLD, color="white"),
@@ -253,21 +277,23 @@ class ScannerView:
                 ft.Container(
                     content=ft.Row([
                         ft.Column([
-                            ft.Text("Total detectado", size=12, color="#718096"),
+                            ft.Text("Total detectado", size=12, color="#E2E8F0"),
                             ft.Text(f"{res.moneda}{res.total:.2f}", size=36,
                                     weight=ft.FontWeight.BOLD, color="#00F5C4",
                                     font_family="JetBrains"),
                         ]),
                         ft.Column([
-                            ft.Text("Artículos", size=12, color="#718096"),
+                            ft.Text("Artículos", size=12, color="#E2E8F0"),
                             ft.Text(str(len(res.articulos)), size=36,
                                     weight=ft.FontWeight.BOLD, color="white"),
                         ]),
                     ], alignment=ft.MainAxisAlignment.SPACE_AROUND),
-                    bgcolor="#111827",
+                    bgcolor="#0AFFFFFF",
+                    border=ft.Border.all(1, "#1AFFFFFF"),
                     border_radius=16,
                     padding=20,
                     margin=ft.Margin.symmetric(horizontal=20),
+                    blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
                 ),
                 ft.Container(height=8),
                 # Lista artículos
@@ -277,11 +303,13 @@ class ScannerView:
                         ft.Container(height=8),
                         *filas_articulos,
                     ], spacing=6, scroll=ft.ScrollMode.AUTO),
-                    bgcolor="#111827",
+                    bgcolor="#0AFFFFFF",
+                    border=ft.Border.all(1, "#1AFFFFFF"),
                     border_radius=16,
                     padding=20,
                     margin=ft.Margin.symmetric(horizontal=20),
                     height=320,
+                    blur=ft.Blur(15, 15, ft.BlurTileMode.MIRROR),
                 ),
                 ft.Container(height=12),
                 # Botón confirmar
@@ -292,7 +320,7 @@ class ScannerView:
                         bgcolor="#00F5C4",
                         height=56,
                         border_radius=16,
-                        alignment=ft.alignment.Alignment.CENTER,
+                        alignment=ft.alignment.CENTER,
                         on_click=self._confirmar_gasto,
                     ),
                     margin=ft.Margin.symmetric(horizontal=20),

@@ -330,8 +330,8 @@ Estado Financiero Actual del Usuario:
         bg_gradient = ft.Container(
             expand=True,
             gradient=ft.LinearGradient(
-                begin=ft.alignment.top_left,
-                end=ft.alignment.bottom_right,
+                begin=ft.alignment.TOP_LEFT,
+                end=ft.alignment.BOTTOM_RIGHT,
                 colors=["#0A0F1E", "#0B1D28", "#1E1233", "#082B24"],
             )
         )
