@@ -16,3 +16,8 @@ module = "main"
 path = "."
 org = "com.visionflow.finance"
 product = "VisionFlow Finance"
+
+[tool.flet.android.permission]
+"android.permission.CAMERA" = true
+"android.permission.READ_EXTERNAL_STORAGE" = true
+"android.permission.READ_MEDIA_IMAGES" = true

@@ -53,7 +53,7 @@ def main(page: ft.Page):
     consejos  = ConsejosView(page, budget_engine)
 
     file_picker = ft.FilePicker()
-    page.overlay.append(file_picker)
+    page.services.append(file_picker)
     
     # Inyectar el picker para que el scanner pueda llamarlo
     scanner.set_picker(file_picker)
@@ -69,7 +69,6 @@ def main(page: ft.Page):
     def navigate(route: str):
         """Navega a una ruta específica reconstruyendo los controles."""
         page.overlay.clear()
-        page.overlay.append(file_picker)  # Re-agregar el picker siempre
         page.controls.clear()
         if route == "/config":
             view_content = dashboard._build_config_panel()
