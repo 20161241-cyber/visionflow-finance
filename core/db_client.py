@@ -79,7 +79,10 @@ class SupabaseClient:
         if self.offline or not self._client:
             return None
         try:
-            return self._client.auth.get_session()
+            session = self._client.auth.get_session()
+            if session and session.user:
+                self._usuario_id = session.user.id
+            return session
         except Exception:
             return None
 
