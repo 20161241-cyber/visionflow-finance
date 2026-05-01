@@ -5,7 +5,7 @@ description = "App de finanzas personales con escaneo OCR de tickets"
 authors = [
     {name = "VisionFlow", email = "dev@visionflow.finance"}
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "flet>=0.24.0",
     "Pillow>=10.0.0",
